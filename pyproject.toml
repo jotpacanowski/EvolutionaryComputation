@@ -17,6 +17,16 @@ classifiers = [
     
 ]
 requires-python = "~=3.10"
+dependencies = [
+    "ipykernel>=6.29.5",
+    "matplotlib>=3.9.2",
+    "numpy>=2.1.2",
+    "pandas>=2.2.3",
+    "rich>=13.9.2",
+    "scipy>=1.14.1",
+    "seaborn>=0.13.2",
+    "typer>=0.12.5",
+]
 
 [tool.black]
 line-length = 99
