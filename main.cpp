@@ -5,7 +5,7 @@
 #include <iterator>
 #include <numeric>
 #include <random>
-#include <sstream>  
+#include <sstream>
 #include <string>
 #include <vector>
 
@@ -19,6 +19,20 @@ using std::cout;
 using std::endl;
 using std::string;
 using std::vector;
+
+void printResults(vector<int> sol, bool toFile = false,
+                  const char* filename = "solution.txt")
+{
+    if (toFile) {
+        string path = "data/results/";
+        path.append(filename);
+        std::ofstream out(path);
+        std::copy(sol.begin(), sol.end(), std::ostream_iterator<int>(out, "\n"));
+    }
+    else {
+        std::copy(sol.begin(), sol.end(), std::ostream_iterator<int>(std::cout, "\n"));
+    }
+}
 
 vector<int> nearestNeighborAnyTSP(vector<vector<int>> distanceMatrix, vector<int> costs,
                                   int starting_node)
@@ -36,7 +50,8 @@ vector<int> nearestNeighborAnyTSP(vector<vector<int>> distanceMatrix, vector<int
         int best_impact = 1000000;
         int candidate_index = 0;
         for (int position = 0; position < solution.size(); position++) {
-            int candidate = nearestNeighbor(distanceMatrix, costs, solution[position], solution);
+            int candidate =
+                nearestNeighbor(distanceMatrix, costs, solution[position], solution);
             int impact = distanceMatrix[solution[position]][candidate] + costs[candidate];
             if (impact < best_impact) {
                 best_candidate = candidate;
@@ -62,13 +77,12 @@ std::vector<int> greedyCycleTSP(std::vector<std::vector<int>> distanceMatrix,
     int candidate = nearestNeighbor(distanceMatrix, costs, starting_node, solution);
     solution.push_back(candidate);
     // std::cout<<solution[0] << " " << solution[1] << std::endl;
-    for (int i = 0; i < N / 2-1; i++) {
+    for (int i = 0; i < N / 2 - 1; i++) {
         int best_candidate = 0;
         int best_impact = 1000000;
         int candidate_index = 0;
         int impact;
-        for (int candidate = 0; candidate < N;
-             candidate++)  // For each candidate
+        for (int candidate = 0; candidate < N; candidate++)  // For each candidate
         {
             if (std::count(solution.begin(), solution.end(),
                            candidate))  // If candidate already in solution, skip
@@ -109,19 +123,6 @@ std::vector<int> greedyCycleTSP(std::vector<std::vector<int>> distanceMatrix,
         solution.insert(solution.begin() + candidate_index, best_candidate);
     }
     return solution;
-}
-void printResults(vector<int> sol, bool toFile = false,
-                  const char *filename = "solution.txt")
-{
-    if (toFile) {
-        string path = "data/results/";
-        path.append(filename);
-        std::ofstream out(path);
-        std::copy(sol.begin(), sol.end(), std::ostream_iterator<int>(out, "\n"));
-    }
-    else {
-        std::copy(sol.begin(), sol.end(), std::ostream_iterator<int>(std::cout, "\n"));
-    }
 }
 
 void randomTSPTask(vector<vector<int>> distanceMatrix, vector<int> costs)
