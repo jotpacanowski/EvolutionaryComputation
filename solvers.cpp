@@ -26,6 +26,8 @@ vector<int> randomTSP(const vector<vector<int>>& distanceMatrix, const vector<in
     std::mt19937 g(rd());
 
     std::shuffle(solution.begin(), solution.end(), g);
+    solution.resize(100);  // TODO: ceil(N/2)
+    // solution.shrink_to_fit();
     return solution;
 }
 
