@@ -40,11 +40,10 @@ void printResults(const vector<int>& sol, bool toFile = false,
     }
 }
 
-void evalWithStarting(const vector<vector<int>>& distanceMatrix, const vector<int>& costs,
-                      TSPSolverStarting solver, const char* name)
+void evalWithStarting(const TSPInstance& instance, TSPSolverStarting solver,
+                      const char* name)
 {
     vector<int> sol;
-    int value;
 
     vector<int> best_sol;
     int best_sol_value = 1'000'000;
@@ -57,8 +56,8 @@ void evalWithStarting(const vector<vector<int>>& distanceMatrix, const vector<in
         // sol = nearestNeighborTSP(distanceMatrix, costs, i);
         // sol = nearestNeighborAnyTSP(distanceMatrix, costs, i);
         // {       sol = greedyCycleTSP(distanceMatrix, costs, i);
-        sol = solver(distanceMatrix, costs, i);
-        value = evaluateSolution(distanceMatrix, costs, sol);
+        sol = solver(instance.distances, instance.costs, i);
+        int value = instance.evaluateSolution(sol);
         if (value < best_sol_value) {
             best_sol_value = value;
             best_sol = sol;
@@ -81,35 +80,16 @@ void evalWithStarting(const vector<vector<int>>& distanceMatrix, const vector<in
 
 int main()
 {
-    const vector<vector<int>> instance = readInstance("TSPA.csv");
-    const vector<vector<int>> D = distanceMatrix(instance);
-    const vector<int> costs = getCosts(instance);
-
-    // for (int i = 0; i < D.size(); i++) {
-    //     for (int j = 0; j < D.size(); j++) {
-    //         cout << D[i][j] << ' ';
-    //     }
-    //     cout << std::endl;
-    // }
+    const auto inst = TSPInstance::readFromFile("TSPA.csv");
 
     cerr << "\x1b[32m random solution \x1b[0m" << endl;
-    // randomTSPTask(D, costs, randomTSP);
-    evalWithStarting(D, costs, randomTSP, "random");
+    evalWithStarting(inst, randomTSP, "random");
     cerr << "\x1b[32m  NN task\x1b[0m" << endl;
-    // nearestNeighborTSPTask(D, costs);
-    evalWithStarting(D, costs, nearestNeighborTSP, "NN-end");
+    evalWithStarting(inst, nearestNeighborTSP, "NN-end");
     cerr << "\x1b[32m  NN any TSP\x1b[0m" << endl;
-    // nearestNeighborAnyTSPTask(D, costs);
-    evalWithStarting(D, costs, nearestNeighborAnyTSP, "NN-any");
-
+    evalWithStarting(inst, nearestNeighborAnyTSP, "NN-any");
     cerr << "\x1b[32m  greedy cycle\x1b[0m" << endl;
-    evalWithStarting(D, costs, greedyCycleTSP, "greedyCycle");
-
-    // vector<int> sol;
-    // sol = nearestNeighborAnyTSP(D, costs, 0);
-    // sol = nearestNeighborTSP(D, costs, 0);
-    // printResults(sol);
-    // cout << evaluateSolution(D, costs, sol) << endl;
+    evalWithStarting(inst, greedyCycleTSP, "greedyCycle");
 
     return 0;
 }

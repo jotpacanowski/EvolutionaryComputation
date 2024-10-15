@@ -1,77 +1,83 @@
-#include <algorithm>
 #include <cmath>
-// #include <filesystem>
 #include <fstream>
 #include <iostream>
-#include <iterator>
-#include <numeric>
-#include <random>
-#include <sstream>  // std::stringstream
+#include <sstream>
 #include <string>
 #include <vector>
 
-// instead of `using namespace`
 using std::cerr;
 using std::cout;
 using std::endl;
 using std::string;
 using std::vector;
 
-// namespace fs = std::filesystem;
-
-vector<vector<int>> readInstance(const char* filename)
-{
-    string path = "data/instances/";
-    path.append(filename);
-    std::ifstream data(path);
+struct TSPInstance {
     vector<vector<int>> instance;
-    string line;
-    while (std::getline(data, line)) {
-        std::stringstream lineStream(line);
-        vector<int> row;
-        string cell;
-        while (std::getline(lineStream, cell, ';')) {
-            row.push_back(std::stoi(cell));
+    vector<vector<int>> distances;
+    vector<int> costs;
+
+    static TSPInstance readFromFile(const std::string& filename)
+    {
+        string path = "data/instances/" + filename;
+        std::ifstream data(path);
+        vector<vector<int>> instance;
+        string line;
+        while (std::getline(data, line)) {
+            std::stringstream lineStream(line);
+            vector<int> row;
+            string cell;
+            while (std::getline(lineStream, cell, ';')) {
+                row.push_back(std::stoi(cell));
+            }
+            instance.push_back(row);
         }
-        instance.push_back(row);
+        return TSPInstance(instance);
     }
-    return instance;
-}
 
-vector<vector<int>> distanceMatrix(const vector<vector<int>>& instance)
-{
-    const int N = instance.size();
+    explicit TSPInstance(const vector<vector<int>>& instanceData) : instance(instanceData)
+    {
+        distances = calculateDistanceMatrix();
+        costs = extractCosts();
+    }
 
-    vector<vector<int>> D(N, vector<int>(N, 0));
+    vector<vector<int>> calculateDistanceMatrix() const
+    {
+        const int N = instance.size();
+        vector<vector<int>> D(N, vector<int>(N, 0));
 
-    for (int i = 0; i < N; i++) {
-        for (int j = 0; j < N; j++) {
-            int dist = (int)nearbyint(std::hypot(instance[i][0] - instance[j][0],
-                                                 instance[i][1] - instance[j][1]));
-            D[i][j] = dist;
+        for (int i = 0; i < N; i++) {
+            for (int j = 0; j < N; j++) {
+                if (i == j) continue;
+
+                double hyp = std::hypot(instance[i][0] - instance[j][0],
+                                        instance[i][1] - instance[j][1]);
+                D[i][j] = std::lround(hyp);
+                // https://en.cppreference.com/w/cpp/numeric/math/round
+                // rounding halfway cases away from zero,
+                // regardless of the current rounding mode
+            }
         }
+        return D;
     }
-    return D;
-}
 
-vector<int> getCosts(const vector<vector<int>>& instance)
-{
-    vector<int> costs(instance.size(), 0);
-    for (int i = 0; i < instance.size(); i++) {
-        costs[i] = instance[i][2];
+    vector<int> extractCosts() const
+    {
+        vector<int> costs(instance.size(), 0);
+        for (int i = 0; i < instance.size(); i++) {
+            costs[i] = instance[i][2];
+        }
+        return costs;
     }
-    return costs;
-}
 
-int evaluateSolution(const vector<vector<int>>& distanceMatrix, const vector<int>& costs,
-                     const vector<int>& solution)
-{
-    int result = costs[solution[0]];
-    for (int i = 1; i < solution.size(); i++) {
-        int node = solution[i];
-        int prev_node = solution[i - 1];
-        result += distanceMatrix[prev_node][node] + costs[node];
+    int evaluateSolution(const vector<int>& solution) const
+    {
+        int result = costs[solution[0]];
+        for (int i = 1; i < solution.size(); i++) {
+            int node = solution[i];
+            int prev_node = solution[i - 1];
+            result += distances[prev_node][node] + costs[node];
+        }
+        result += distances[solution.front()][solution.back()];
+        return result;
     }
-    result += distanceMatrix[solution[0]][solution[solution.size() - 1]];
-    return result;
-}
+};
