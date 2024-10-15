@@ -1,24 +1,31 @@
 #include <algorithm>
+#include <cerrno>
 #include <cmath>
+#include <cstdio>
+#include <filesystem>
+#include <format>
 #include <fstream>
 #include <iostream>
 #include <iterator>
 #include <numeric>
 #include <random>
-#include <sstream>
 #include <string>
+#include <string_view>
+#include <system_error>
 #include <vector>
 
 // TODO: proper linking
 #include "reading.cpp"
 #include "solvers.cpp"
 
-// instead of `using namespace`
 using std::cerr;
 using std::cout;
 using std::endl;
 using std::string;
+using std::string_view;
 using std::vector;
+
+namespace fs = std::filesystem;
 
 // func(distanceMatrix, costs) returning sequence of indices
 using TSPSolverStarting = vector<int>(const vector<vector<int>>&, /*D*/
@@ -27,12 +34,29 @@ using TSPSolverStarting = vector<int>(const vector<vector<int>>&, /*D*/
 );
 
 void printResults(const vector<int>& sol, bool toFile = false,
-                  const char* filename = "solution.txt")
+                  string_view filename = "solution.txt")
 {
     if (toFile) {
-        string path = "data/results/";
-        path.append(filename);
+        fs::path path = "data/results/";
+        path = path / filename;
         std::ofstream out(path);
+        if (!out.is_open()) {
+            // perror("Error");
+            std::error_code ec(errno, std::generic_category());
+            cerr << "Error: " << ec.message() << " (code: " << ec.value() << ")\n";
+
+            fs::path parent_dir = fs::path(path).parent_path();
+            if (!fs::exists(parent_dir)) {
+                cerr << "Creating missing directory: " << parent_dir << endl;
+                std::error_code ec;
+                fs::create_directories(parent_dir, ec);
+                // Check error without exceptions
+                if (ec.value() != 0) {
+                    cerr << "Failed: " << ec.message() << endl;
+                    exit(1);
+                }
+            }
+        }
         std::copy(sol.begin(), sol.end(), std::ostream_iterator<int>(out, "\n"));
     }
     else {
@@ -68,14 +92,10 @@ void evalWithStarting(const TSPInstance& instance, TSPSolverStarting solver,
         }
     }
 
-    cout << "BEST: " << best_sol_value << endl;
-    std::stringstream ss;
-    ss << name << "/best.txt";
-    printResults(best_sol, true, ss.str().c_str());
-    ss.clear();
-    ss << name << "/worst.txt";
+    cout << "BEST : " << best_sol_value << endl;
     cout << "WORST: " << worst_sol_value << endl;
-    printResults(worst_sol, true, ss.str().c_str());
+    printResults(best_sol, true, std::format("{}_best.txt", name));
+    printResults(worst_sol, true, std::format("{}_worst.txt", name));
 }
 
 int main()
