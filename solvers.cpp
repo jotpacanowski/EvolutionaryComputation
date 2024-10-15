@@ -19,7 +19,7 @@ using std::endl;
 using std::string;
 using std::vector;
 
-vector<int> randomTSP(vector<vector<int>> distanceMatrix, vector<int> costs)
+vector<int> randomTSP(vector<vector<int>> distanceMatrix, vector<int> costs, int)
 {
     vector<int> solution;
     solution.reserve(distanceMatrix.size());
