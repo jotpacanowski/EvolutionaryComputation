@@ -253,23 +253,25 @@ int main()
     vector<vector<int>> instance = readInstance("TSPA.csv");
     vector<vector<int>> D = distanceMatrix(instance);
     vector<int> costs = getCosts(instance);
-    // for (int i = 0; i < D.size(); i++)
-    // {
-    //     for (int j = 0; j < D.size(); j++)
-    //     {
-    //         std::cout << D[i][j] << ' ';
+
+    // for (int i = 0; i < D.size(); i++) {
+    //     for (int j = 0; j < D.size(); j++) {
+    //         cout << D[i][j] << ' ';
     //     }
-    //     std::cout << std::endl;
+    //     cout << std::endl;
     // }
+
     randomTSPTask(D, costs);
     nearestNeighborTSPTask(D, costs);
     nearestNeighborAnyTSPTask(D, costs);
     greedyCycleTSPTask(D, costs);
     // vector<int> sol = nearestNeighborAnyTSP(D, costs, 0);
-    // // vector<int>
-    // //     sol = nearestNeighborTSP(D, costs, 0);
+
+    // vector<int> sol;
+    // sol = nearestNeighborAnyTSP(D, costs, 0);
+    // sol = nearestNeighborTSP(D, costs, 0);
     // printResults(sol);
-    // std::cout << evaluateSolution(D, costs, sol) << std::endl;
+    // cout << evaluateSolution(D, costs, sol) << endl;
 
     return 0;
 }
