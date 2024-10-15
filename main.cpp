@@ -9,10 +9,14 @@
 #include <string>
 #include <vector>
 
+// instead of `using namespace`
+using std::cerr;
+using std::cout;
+using std::endl;
 using std::string;
 using std::vector;
 
-vector<vector<int>> readInstance(char *filename)
+vector<vector<int>> readInstance(const char *filename)
 {
     string path = "data/instances/";
     path.append(filename);
@@ -72,6 +76,7 @@ int evaluateSolution(vector<vector<int>> distanceMatrix, vector<int> costs,
 vector<int> randomTSP(vector<vector<int>> distanceMatrix, vector<int> costs)
 {
     vector<int> solution;
+    solution.reserve(distanceMatrix.size());
     for (int i = 0; i < distanceMatrix.size(); i++) {
         solution.push_back(i);
     }
@@ -109,9 +114,10 @@ int nearestNeighbor(vector<vector<int>> distanceMatrix, vector<int> costs, int n
 vector<int> nearestNeighborTSP(vector<vector<int>> distanceMatrix, vector<int> costs,
                                int starting_node)
 {
+    const int N = distanceMatrix.size();
     vector<int> solution;
-    if (starting_node == NULL) {
-        starting_node = rand() % 200;
+    if (starting_node < 0) {
+        starting_node = rand() % N;
     }
     solution.push_back(starting_node);
     int last = starting_node;
@@ -127,12 +133,13 @@ vector<int> nearestNeighborTSP(vector<vector<int>> distanceMatrix, vector<int> c
 vector<int> nearestNeighborAnyTSP(vector<vector<int>> distanceMatrix, vector<int> costs,
                                   int starting_node)
 {
+    const int N = distanceMatrix.size();
     vector<int> solution;
-    if (starting_node == NULL) {
-        starting_node = rand() % 200;
+    if (starting_node < 0) {
+        starting_node = rand() % N;
     }
     solution.push_back(starting_node);
-    int last = starting_node;
+    int _last = starting_node;
     int next;
     for (int i = 0; i < distanceMatrix.size() / 2; i++) {
         // vector<int> candidates;
@@ -150,12 +157,13 @@ vector<int> nearestNeighborAnyTSP(vector<vector<int>> distanceMatrix, vector<int
         }
         next = best_candidate;
         solution.insert(solution.begin() + candidate_index, best_candidate);
-        last = next;
+        _last = next;
     }
     return solution;
 }
 
-void printResults(vector<int> sol, bool toFile = false, char *filename = "solution.txt")
+void printResults(vector<int> sol, bool toFile = false,
+                  const char *filename = "solution.txt")
 {
     if (toFile) {
         string path = "results/";
@@ -193,9 +201,9 @@ void randomTSPTask(vector<vector<int>> distanceMatrix, vector<int> costs)
         }
     }
 
-    std::cout << "BEST: " << best_sol_value << std::endl;
+    cout << "BEST: " << best_sol_value << endl;
     printResults(best_sol, true, "random/best.txt");
-    std::cout << "WORST: " << worst_sol_value << std::endl;
+    cout << "WORST: " << worst_sol_value << endl;
     printResults(worst_sol, true, "random/worst.txt");
 }
 
@@ -224,9 +232,9 @@ void nearestNeighborTSPTask(vector<vector<int>> distanceMatrix, vector<int> cost
         }
     }
 
-    std::cout << "BEST: " << best_sol_value << std::endl;
+    cout << "BEST: " << best_sol_value << endl;
     printResults(best_sol, true, "nearest/best.txt");
-    std::cout << "WORST: " << worst_sol_value << std::endl;
+    cout << "WORST: " << worst_sol_value << endl;
     printResults(worst_sol, true, "nearest/worst.txt");
 }
 
@@ -255,9 +263,9 @@ void nearestNeighborAnyTSPTask(vector<vector<int>> distanceMatrix, vector<int> c
         }
     }
 
-    std::cout << "BEST: " << best_sol_value << std::endl;
+    cout << "BEST: " << best_sol_value << endl;
     printResults(best_sol, true, "nearest_any/best.txt");
-    std::cout << "WORST: " << worst_sol_value << std::endl;
+    cout << "WORST: " << worst_sol_value << endl;
     printResults(worst_sol, true, "nearest_any/worst.txt");
 }
 
