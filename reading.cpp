@@ -20,6 +20,11 @@ struct TSPInstance {
     {
         string path = "data/instances/" + filename;
         std::ifstream data(path);
+        if (!data.is_open()) {
+            cerr << "Open " << path << " failed: ";
+            perror("");
+            exit(1);
+        }
         vector<vector<int>> instance;
         string line;
         while (std::getline(data, line)) {
@@ -30,6 +35,10 @@ struct TSPInstance {
                 row.push_back(std::stoi(cell));
             }
             instance.push_back(row);
+        }
+        if (instance.size() < 2) {
+            cerr << "[warn] Read " << instance.size() << " rows\n";
+            exit(1);
         }
         return TSPInstance(instance);
     }
