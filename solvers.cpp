@@ -3,14 +3,9 @@
 #include <fstream>
 #include <iostream>
 #include <iterator>
-#include <numeric>
 #include <random>
-#include <sstream>  // std::stringstream
 #include <string>
 #include <vector>
-
-// TODO
-// #include "reading.cpp"
 
 // instead of `using namespace`
 using std::cerr;
@@ -19,7 +14,8 @@ using std::endl;
 using std::string;
 using std::vector;
 
-vector<int> randomTSP(vector<vector<int>> distanceMatrix, vector<int> costs, int)
+vector<int> randomTSP(const vector<vector<int>>& distanceMatrix, const vector<int>& costs,
+                      int)
 {
     vector<int> solution;
     solution.reserve(distanceMatrix.size());
@@ -33,8 +29,8 @@ vector<int> randomTSP(vector<vector<int>> distanceMatrix, vector<int> costs, int
     return solution;
 }
 
-int nearestNeighbor(vector<vector<int>> distanceMatrix, vector<int> costs, int node,
-                    vector<int> solution)
+int nearestNeighbor(const vector<vector<int>>& distanceMatrix, const vector<int>& costs,
+                    int node, const vector<int>& solution)
 {
     vector<int> neighbors = distanceMatrix[node];
     int current_impact = 1000000;
@@ -57,8 +53,8 @@ int nearestNeighbor(vector<vector<int>> distanceMatrix, vector<int> costs, int n
     return nearest_neighbor;
 }
 
-vector<int> nearestNeighborTSP(vector<vector<int>> distanceMatrix, vector<int> costs,
-                               int starting_node)
+vector<int> nearestNeighborTSP(const vector<vector<int>>& distanceMatrix,
+                               const vector<int>& costs, int starting_node)
 {
     const int N = distanceMatrix.size();
     vector<int> solution;
@@ -76,8 +72,8 @@ vector<int> nearestNeighborTSP(vector<vector<int>> distanceMatrix, vector<int> c
     return solution;
 }
 
-vector<int> nearestNeighborAnyTSP(vector<vector<int>> distanceMatrix, vector<int> costs,
-                                  int starting_node)
+vector<int> nearestNeighborAnyTSP(const vector<vector<int>>& distanceMatrix,
+                                  const vector<int>& costs, int starting_node)
 {
     const int N = distanceMatrix.size();
     vector<int> solution;
@@ -108,18 +104,18 @@ vector<int> nearestNeighborAnyTSP(vector<vector<int>> distanceMatrix, vector<int
     return solution;
 }
 
-std::vector<int> greedyCycleTSP(std::vector<std::vector<int>> distanceMatrix,
-                                std::vector<int> costs, int starting_node)
+vector<int> greedyCycleTSP(const vector<vector<int>>& distanceMatrix,
+                           const vector<int>& costs, int starting_node)
 {
     const int N = distanceMatrix.size();
-    std::vector<int> solution;
+    vector<int> solution;
     if (starting_node < 0) {
         starting_node = rand() % N;
     }
     solution.push_back(starting_node);
     int candidate = nearestNeighbor(distanceMatrix, costs, starting_node, solution);
     solution.push_back(candidate);
-    // std::cout<<solution[0] << " " << solution[1] << std::endl;
+    // cout<<solution[0] << " " << solution[1] << endl;
     for (int i = 0; i < N / 2 - 1; i++) {
         int best_candidate = 0;
         int best_impact = 1000000;
@@ -130,33 +126,33 @@ std::vector<int> greedyCycleTSP(std::vector<std::vector<int>> distanceMatrix,
             if (std::count(solution.begin(), solution.end(),
                            candidate))  // If candidate already in solution, skip
             {
-                // std::cout << "in solution: " << i << std::endl;
+                // cout << "in solution: " << i << endl;
                 continue;
             }
             for (int j = 0; j < solution.size();
                  j++)  // Check insertion for candidate at each index
             {
                 if (j == 0) {
-                    // std::cout <<"INSERT AT 0, BETWEEEN: "<<  solution[j] << ' ' <<
-                    // candidate << solution[solution.size() - 1] << std::endl;
+                    // cout <<"INSERT AT 0, BETWEEEN: "<<  solution[j] << ' ' <<
+                    // candidate << solution[solution.size() - 1] << endl;
 
                     impact = distanceMatrix[solution[j]][candidate] +
                              distanceMatrix[solution.size() - 1][candidate] +
                              costs[candidate];
                 }
                 else {
-                    // std::cout << solution[j - 1] << ' ' << candidate << solution[j] <<
-                    // std::endl;
+                    // cout << solution[j - 1] << ' ' << candidate << solution[j] <<
+                    // endl;
 
                     impact = distanceMatrix[solution[j]][candidate] +
                              distanceMatrix[solution[j - 1]][candidate] +
                              costs[candidate];
                 }
-                // std::cout<<"IMPACT: " << impact<<std::endl;
+                // cout<<"IMPACT: " << impact<<endl;
                 if (impact < best_impact) {
                     best_impact = impact;
                     best_candidate = candidate;
-                    // std::cout << "Better impact: " << best_impact << std::endl;
+                    // cout << "Better impact: " << best_impact << endl;
 
                     candidate_index = j;
                 }

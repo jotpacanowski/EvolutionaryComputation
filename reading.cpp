@@ -1,5 +1,6 @@
 #include <algorithm>
 #include <cmath>
+// #include <filesystem>
 #include <fstream>
 #include <iostream>
 #include <iterator>
@@ -16,7 +17,9 @@ using std::endl;
 using std::string;
 using std::vector;
 
-vector<vector<int>> readInstance(const char *filename)
+// namespace fs = std::filesystem;
+
+vector<vector<int>> readInstance(const char* filename)
 {
     string path = "data/instances/";
     path.append(filename);
@@ -35,14 +38,14 @@ vector<vector<int>> readInstance(const char *filename)
     return instance;
 }
 
-vector<vector<int>> distanceMatrix(vector<vector<int>> instance)
+vector<vector<int>> distanceMatrix(const vector<vector<int>>& instance)
 {
-    int instance_size = instance.size();
+    const int N = instance.size();
 
-    vector<vector<int>> D(instance_size, vector<int>(instance_size, 0));
+    vector<vector<int>> D(N, vector<int>(N, 0));
 
-    for (int i = 0; i < instance_size; i++) {
-        for (int j = 0; j < instance_size; j++) {
+    for (int i = 0; i < N; i++) {
+        for (int j = 0; j < N; j++) {
             int dist = (int)nearbyint(std::hypot(instance[i][0] - instance[j][0],
                                                  instance[i][1] - instance[j][1]));
             D[i][j] = dist;
@@ -51,7 +54,7 @@ vector<vector<int>> distanceMatrix(vector<vector<int>> instance)
     return D;
 }
 
-vector<int> getCosts(vector<vector<int>> instance)
+vector<int> getCosts(const vector<vector<int>>& instance)
 {
     vector<int> costs(instance.size(), 0);
     for (int i = 0; i < instance.size(); i++) {
@@ -60,8 +63,8 @@ vector<int> getCosts(vector<vector<int>> instance)
     return costs;
 }
 
-int evaluateSolution(vector<vector<int>> distanceMatrix, vector<int> costs,
-                     vector<int> solution)
+int evaluateSolution(const vector<vector<int>>& distanceMatrix, const vector<int>& costs,
+                     const vector<int>& solution)
 {
     int result = costs[solution[0]];
     for (int i = 1; i < solution.size(); i++) {

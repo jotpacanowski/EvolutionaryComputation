@@ -21,10 +21,12 @@ using std::string;
 using std::vector;
 
 // func(distanceMatrix, costs) returning sequence of indices
-using TSPSolver = vector<int>(vector<vector<int>>, vector<int>);
-using TSPSolverStarting = vector<int>(vector<vector<int>>, vector<int>, int);
+using TSPSolverStarting = vector<int>(const vector<vector<int>>&, /*D*/
+                                      const vector<int>&,         /* costs*/
+                                      int                         /*starting*/
+);
 
-void printResults(vector<int> sol, bool toFile = false,
+void printResults(const vector<int>& sol, bool toFile = false,
                   const char* filename = "solution.txt")
 {
     if (toFile) {
@@ -38,7 +40,7 @@ void printResults(vector<int> sol, bool toFile = false,
     }
 }
 
-void evalWithStarting(vector<vector<int>> distanceMatrix, vector<int> costs,
+void evalWithStarting(const vector<vector<int>>& distanceMatrix, const vector<int>& costs,
                       TSPSolverStarting solver, const char* name)
 {
     vector<int> sol;
@@ -79,9 +81,9 @@ void evalWithStarting(vector<vector<int>> distanceMatrix, vector<int> costs,
 
 int main()
 {
-    vector<vector<int>> instance = readInstance("TSPA.csv");
-    vector<vector<int>> D = distanceMatrix(instance);
-    vector<int> costs = getCosts(instance);
+    const vector<vector<int>> instance = readInstance("TSPA.csv");
+    const vector<vector<int>> D = distanceMatrix(instance);
+    const vector<int> costs = getCosts(instance);
 
     // for (int i = 0; i < D.size(); i++) {
     //     for (int j = 0; j < D.size(); j++) {
