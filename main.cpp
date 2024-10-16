@@ -12,6 +12,7 @@
 #include <string>
 #include <string_view>
 #include <system_error>
+#include <utility>
 #include <vector>
 
 // TODO: proper linking
@@ -67,7 +68,7 @@ void printResults(const vector<int>& sol, bool toFile = false,
 void evalWithStarting(const TSPInstance& instance, TSPSolverStarting solver,
                       const char* name)
 {
-    vector<int> sol;
+    // vector<int> sol;
 
     vector<int> best_sol;
     int best_sol_value = 1'000'000;
@@ -75,12 +76,12 @@ void evalWithStarting(const TSPInstance& instance, TSPSolverStarting solver,
     vector<int> worst_sol;
     int worst_sol_value = 0;
 
+    long long average_numerator = 0;
+    long long average_denominator = 0;
+
     // Generating 200 random solutions, keeping the best and the worst ones.
     for (int i = 0; i < 200; i++) {
-        // sol = nearestNeighborTSP(distanceMatrix, costs, i);
-        // sol = nearestNeighborAnyTSP(distanceMatrix, costs, i);
-        // {       sol = greedyCycleTSP(distanceMatrix, costs, i);
-        sol = solver(instance.distances, instance.costs, i);
+        auto sol = solver(instance.distances, instance.costs, i);
         int value = instance.evaluateSolution(sol);
         if (value < best_sol_value) {
             best_sol_value = value;
@@ -90,10 +91,16 @@ void evalWithStarting(const TSPInstance& instance, TSPSolverStarting solver,
             worst_sol_value = value;
             worst_sol = sol;
         }
+        average_numerator += value;
+        average_denominator += 1;
     }
 
-    cout << "BEST : " << best_sol_value << endl;
-    cout << "WORST: " << worst_sol_value << endl;
+    cout << std::format(
+        "   best: {:>7}\n"
+        "average: {:>11.3f}\n"
+        "  worst: {:>7}\n",
+        best_sol_value, (double)(average_numerator) / average_denominator,
+        worst_sol_value);
     printResults(best_sol, true, std::format("{}_best.txt", name));
     printResults(worst_sol, true, std::format("{}_worst.txt", name));
 }
@@ -102,14 +109,17 @@ int main()
 {
     const auto inst = TSPInstance::readFromFile("TSPA.csv");
 
-    cerr << "\x1b[32m random solution \x1b[0m" << endl;
-    evalWithStarting(inst, randomTSP, "random");
-    cerr << "\x1b[32m  NN task\x1b[0m" << endl;
-    evalWithStarting(inst, nearestNeighborTSP, "NN-end");
-    cerr << "\x1b[32m  NN any TSP\x1b[0m" << endl;
-    evalWithStarting(inst, nearestNeighborAnyTSP, "NN-any");
-    cerr << "\x1b[32m  greedy cycle\x1b[0m" << endl;
-    evalWithStarting(inst, greedyCycleTSP, "greedyCycle");
+    const std::pair<TSPSolverStarting*, const char*> WHAT_TO_RUN[] = {
+        {randomTSP, "random"},
+        {nearestNeighborTSP, "NN-end"},
+        {nearestNeighborAnyTSP, "NN-any"},
+        {greedyCycleTSP, "greedyCycle"},
+    };
 
+    for (auto it : WHAT_TO_RUN) {
+        auto [solver, name] = it;
+        cerr << std::format("\x1b[32m {} \x1b[0m", name) << endl;
+        evalWithStarting(inst, solver, name);
+    }
     return 0;
 }
