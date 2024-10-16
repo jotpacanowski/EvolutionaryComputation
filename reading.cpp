@@ -40,6 +40,7 @@ struct TSPInstance {
             cerr << "[warn] Read " << instance.size() << " rows\n";
             exit(1);
         }
+        cerr << "[ok] Read " << filename << endl;
         return TSPInstance(instance);
     }
 

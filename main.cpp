@@ -66,7 +66,7 @@ void printResults(const vector<int>& sol, bool toFile = false,
 }
 
 void evalWithStarting(const TSPInstance& instance, TSPSolverStarting solver,
-                      const char* name)
+                      string_view solver_name, string_view instance_name)
 {
     // vector<int> sol;
 
@@ -101,13 +101,24 @@ void evalWithStarting(const TSPInstance& instance, TSPSolverStarting solver,
         "  worst: {:>7}\n",
         best_sol_value, (double)(average_numerator) / average_denominator,
         worst_sol_value);
-    printResults(best_sol, true, std::format("{}_best.txt", name));
-    printResults(worst_sol, true, std::format("{}_worst.txt", name));
+    if (instance_name.ends_with(".csv")) {
+        instance_name.remove_suffix(4);
+    }
+    printResults(best_sol, true,
+                 std::format("{}_{}_best.txt", instance_name, solver_name));
+    printResults(worst_sol, true,
+                 std::format("{}_{}_worst.txt", instance_name, solver_name));
 }
 
-int main()
+int main(int argc, char* argv[])
 {
-    const auto inst = TSPInstance::readFromFile("TSPA.csv");
+    const char* input_file_name = "TSPA.csv";
+    if (argc >= 2) {
+        const auto arg = argv[1];
+        // if (fs::exists(arg)) {
+        input_file_name = arg;
+    }
+    const auto inst = TSPInstance::readFromFile(input_file_name);
 
     const std::pair<TSPSolverStarting*, const char*> WHAT_TO_RUN[] = {
         {randomTSP, "random"},
@@ -119,7 +130,7 @@ int main()
     for (auto it : WHAT_TO_RUN) {
         auto [solver, name] = it;
         cerr << std::format("\x1b[32m {} \x1b[0m", name) << endl;
-        evalWithStarting(inst, solver, name);
+        evalWithStarting(inst, solver, name, input_file_name);
     }
     return 0;
 }
