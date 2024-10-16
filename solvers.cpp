@@ -1,5 +1,6 @@
 #include <algorithm>
 #include <cmath>
+#include <cstdint>
 #include <fstream>
 #include <iostream>
 #include <iterator>
@@ -31,27 +32,24 @@ vector<int> randomTSP(const vector<vector<int>>& distanceMatrix, const vector<in
     return solution;
 }
 
-int nearestNeighbor(const vector<vector<int>>& distanceMatrix, const vector<int>& costs,
-                    int node, const vector<int>& solution)
+static int findNearestNeighbor(const vector<vector<int>>& distanceMatrix,
+                               const vector<int>& costs, int node,
+                               const vector<int>& solution,
+                               const vector<uint8_t>& is_in_sol)
 {
     vector<int> neighbors = distanceMatrix[node];
     int current_impact = 1000000;
     int nearest_neighbor = 0;
     int impact;
     for (int i = 0; i < neighbors.size(); i++) {
-        // std::cout << "i: " << i << std::endl;
-        if (std::count(solution.begin(), solution.end(), i)) {
-            // std::cout << "in solution: " << i << std::endl;
-            continue;
-        }
+        if (is_in_sol[i]) continue;
         impact = distanceMatrix[node][i] + costs[i];
-        // std::cout << impact << std::endl;
+
         if (impact < current_impact) {
             nearest_neighbor = i;
             current_impact = impact;
         }
     }
-    // std::cout << nearest_neighbor << std::endl;
     return nearest_neighbor;
 }
 
@@ -60,15 +58,18 @@ vector<int> nearestNeighborTSP(const vector<vector<int>>& distanceMatrix,
 {
     const int N = distanceMatrix.size();
     vector<int> solution;
+    vector<uint8_t> is_in_sol(N, 0);
     if (starting_node < 0) {
         starting_node = rand() % N;
     }
     solution.push_back(starting_node);
+    is_in_sol[starting_node] = 1;
+
     int last = starting_node;
-    int next;
     for (int i = 0; i < distanceMatrix.size() / 2; i++) {
-        next = nearestNeighbor(distanceMatrix, costs, last, solution);
+        int next = findNearestNeighbor(distanceMatrix, costs, last, solution, is_in_sol);
         solution.push_back(next);
+        is_in_sol[next] = 1;
         last = next;
     }
     return solution;
@@ -79,19 +80,20 @@ vector<int> nearestNeighborAnyTSP(const vector<vector<int>>& distanceMatrix,
 {
     const int N = distanceMatrix.size();
     vector<int> solution;
+    vector<uint8_t> is_in_sol(N, 0);
     if (starting_node < 0) {
         starting_node = rand() % N;
     }
     solution.push_back(starting_node);
-    int _last = starting_node;
-    int next;
+    is_in_sol[starting_node] = 1;
+
     for (int i = 0; i < N / 2; i++) {
         int best_candidate = 0;
         int best_impact = 1000000;
         int candidate_index = 0;
         for (int position = 0; position < solution.size(); position++) {
-            int candidate =
-                nearestNeighbor(distanceMatrix, costs, solution[position], solution);
+            int candidate = findNearestNeighbor(distanceMatrix, costs, solution[position],
+                                                solution, is_in_sol);
             int impact = distanceMatrix[solution[position]][candidate] + costs[candidate];
             if (impact < best_impact) {
                 best_candidate = candidate;
@@ -99,9 +101,8 @@ vector<int> nearestNeighborAnyTSP(const vector<vector<int>>& distanceMatrix,
                 candidate_index = position;
             }
         }
-        next = best_candidate;
         solution.insert(solution.begin() + candidate_index, best_candidate);
-        _last = next;
+        is_in_sol[best_candidate] = 1;
     }
     return solution;
 }
@@ -111,13 +112,18 @@ vector<int> greedyCycleTSP(const vector<vector<int>>& distanceMatrix,
 {
     const int N = distanceMatrix.size();
     vector<int> solution;
+    vector<uint8_t> is_in_sol(N, 0);
     if (starting_node < 0) {
         starting_node = rand() % N;
     }
     solution.push_back(starting_node);
-    int candidate = nearestNeighbor(distanceMatrix, costs, starting_node, solution);
+    is_in_sol[starting_node] = 1;
+
+    int candidate =
+        findNearestNeighbor(distanceMatrix, costs, starting_node, solution, is_in_sol);
     solution.push_back(candidate);
-    // cout<<solution[0] << " " << solution[1] << endl;
+    is_in_sol[candidate] = 1;
+
     for (int i = 0; i < N / 2 - 1; i++) {
         int best_candidate = 0;
         int best_impact = 1000000;
@@ -125,14 +131,10 @@ vector<int> greedyCycleTSP(const vector<vector<int>>& distanceMatrix,
         int impact;
         for (int candidate = 0; candidate < N; candidate++)  // For each candidate
         {
-            if (std::count(solution.begin(), solution.end(),
-                           candidate))  // If candidate already in solution, skip
-            {
-                // cout << "in solution: " << i << endl;
-                continue;
-            }
-            for (int j = 0; j < solution.size();
-                 j++)  // Check insertion for candidate at each index
+            // If candidate already in solution, skip
+            if (is_in_sol[candidate]) continue;
+            for (int j = 0; j < solution.size(); j++)
+            // Check insertion for candidate at each index
             {
                 if (j == 0) {
                     // cout <<"INSERT AT 0, BETWEEEN: "<<  solution[j] << ' ' <<
@@ -162,6 +164,7 @@ vector<int> greedyCycleTSP(const vector<vector<int>>& distanceMatrix,
         }
 
         solution.insert(solution.begin() + candidate_index, best_candidate);
+        is_in_sol[best_candidate] = 1;
     }
     return solution;
 }
