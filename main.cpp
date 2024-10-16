@@ -56,6 +56,15 @@ void printResults(const vector<int>& sol, bool toFile = false,
                     cerr << "Failed: " << ec.message() << endl;
                     exit(1);
                 }
+                // Try again
+                out.open(path);
+                if (!out.is_open()) {
+                    perror("second open");
+                    exit(1);
+                }
+            }
+            else {
+                exit(1);
             }
         }
         std::copy(sol.begin(), sol.end(), std::ostream_iterator<int>(out, "\n"));
