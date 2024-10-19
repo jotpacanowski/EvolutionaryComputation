@@ -9,9 +9,6 @@ CXXFLAGS += -Wall -Wno-sign-compare
 TARGET = main
 BUILD_DIR = build
 SRCS := main.cpp solvers.cpp
-# OBJS := $(SRCS:.cpp=.o)
-# DEPS := $(OBJS:.o=.d)
-# OBJS := $(SRCS:.cpp=.cpp.o)
 OBJS := $(SRCS:%.cpp=$(BUILD_DIR)/%.cpp.o)
 DEPS := $(OBJS:.cpp.o=.cpp.d)
 
@@ -27,9 +24,7 @@ run: $(TARGET)
 $(TARGET): $(OBJS) | $(BUILD_DIR)
 	$(CXX) $(CXXFLAGS) -o $@ $^
 
-#%.cpp.o: %.cpp
-#	$(CXX) $(CXXFLAGS) -c $< -o $@
-# in build/
+# in build/ folder
 $(BUILD_DIR)/%.cpp.o: %.cpp | $(BUILD_DIR)
 	$(CXX) $(CXXFLAGS) -MMD -MP -c $< -o $@
 
@@ -43,4 +38,4 @@ clean:
 #	rm -f $(TARGET) $(OBJS) $(DEPS)
 
 # https://stackoverflow.com/questions/16467718/how-to-print-out-a-variable-in-makefile
-print-%  : ; @echo $* = $($*)
+# print-%  : ; @echo $* = $($*)
