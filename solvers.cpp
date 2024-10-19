@@ -22,7 +22,7 @@ static int findNearestNeighbor(const vector<vector<int>>& distanceMatrix,
                                const vector<int>& solution,
                                const vector<uint8_t>& is_in_sol)
 {
-    vector<int> neighbors = distanceMatrix[node];
+    const vector<int>& neighbors = distanceMatrix[node];
     int current_impact = 1000000;
     int nearest_neighbor = 0;
     int impact;
