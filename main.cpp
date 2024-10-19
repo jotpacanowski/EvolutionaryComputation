@@ -1,32 +1,6 @@
-#include <algorithm>
-#include <cerrno>
-#include <cmath>
-#include <cstdio>
-#include <filesystem>
-#include <format>
-#include <fstream>
-#include <iostream>
-#include <iterator>
-#include <numeric>
-#include <random>
-#include <string>
-#include <string_view>
-#include <system_error>
-#include <utility>
-#include <vector>
-
-// TODO: proper linking
-#include "reading.cpp"
-#include "solvers.cpp"
-
-using std::cerr;
-using std::cout;
-using std::endl;
-using std::string;
-using std::string_view;
-using std::vector;
-
-namespace fs = std::filesystem;
+#include "headers.hpp"
+#include "reading.hpp"
+#include "solvers.hpp"
 
 // func(distanceMatrix, costs) returning sequence of indices
 using TSPSolverStarting = vector<int>(const vector<vector<int>>&, /*D*/

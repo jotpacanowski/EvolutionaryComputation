@@ -1,19 +1,4 @@
-#include <algorithm>
-#include <cmath>
-#include <cstdint>
-#include <fstream>
-#include <iostream>
-#include <iterator>
-#include <random>
-#include <string>
-#include <vector>
-
-// instead of `using namespace`
-using std::cerr;
-using std::cout;
-using std::endl;
-using std::string;
-using std::vector;
+#include "headers.hpp"
 
 vector<int> randomTSP(const vector<vector<int>>& distanceMatrix, const vector<int>& costs,
                       int)

@@ -1,15 +1,4 @@
-#include <cmath>
-#include <fstream>
-#include <iostream>
-#include <sstream>
-#include <string>
-#include <vector>
-
-using std::cerr;
-using std::cout;
-using std::endl;
-using std::string;
-using std::vector;
+#include "headers.hpp"
 
 struct TSPInstance {
     vector<vector<int>> instance;
