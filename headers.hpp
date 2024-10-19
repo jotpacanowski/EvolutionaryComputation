@@ -29,3 +29,5 @@ using std::vector;
 namespace fs = std::filesystem;  // NOLINT
 
 // NOLINTEND
+
+static const int LARGE_SCORE = 10'000'000;

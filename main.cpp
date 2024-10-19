@@ -54,7 +54,7 @@ void evalWithStarting(const TSPInstance& instance, TSPSolverStarting solver,
     // vector<int> sol;
 
     vector<int> best_sol;
-    int best_sol_value = 1'000'000;
+    int best_sol_value = LARGE_SCORE;
 
     vector<int> worst_sol;
     int worst_sol_value = 0;

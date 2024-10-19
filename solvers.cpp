@@ -1,18 +1,21 @@
 #include "headers.hpp"
 
 vector<int> randomTSP(const vector<vector<int>>& distanceMatrix, const vector<int>& costs,
-                      int)
+                      int seed)
 {
+    const int N = distanceMatrix.size();
     vector<int> solution;
-    solution.reserve(distanceMatrix.size());
-    for (int i = 0; i < distanceMatrix.size(); i++) {
+    solution.reserve(N);
+    for (int i = 0; i < N; i++) {
         solution.push_back(i);
     }
     std::random_device rd;
     std::mt19937 g(rd());
+    // deterministic:
+    // std::mt19937 g(5 * seed);
 
     std::shuffle(solution.begin(), solution.end(), g);
-    solution.resize(100);  // TODO: ceil(N/2)
+    solution.resize((N + 1) / 2);
     // solution.shrink_to_fit();
     return solution;
 }
@@ -22,18 +25,25 @@ static int findNearestNeighbor(const vector<vector<int>>& distanceMatrix,
                                const vector<int>& solution,
                                const vector<uint8_t>& is_in_sol)
 {
-    const vector<int>& neighbors = distanceMatrix[node];
-    int current_impact = 1000000;
-    int nearest_neighbor = 0;
-    int impact;
-    for (int i = 0; i < neighbors.size(); i++) {
-        if (is_in_sol[i]) continue;
-        impact = distanceMatrix[node][i] + costs[i];
+    const int N = distanceMatrix.size();
+
+    int current_impact = LARGE_SCORE;
+    int nearest_neighbor = -1;
+
+    for (int i = 0; i < N; i++) {
+        if (is_in_sol[i] != 0) continue;
+        int impact = distanceMatrix[node][i] + costs[i];
 
         if (impact < current_impact) {
             nearest_neighbor = i;
             current_impact = impact;
         }
+    }
+
+    // check for correctness (debug assertion?)
+    if (nearest_neighbor == -1) {
+        cerr << "error: nearest_neighbor not found" << endl;
+        exit(1);
     }
     return nearest_neighbor;
 }
@@ -43,6 +53,7 @@ vector<int> nearestNeighborTSP(const vector<vector<int>>& distanceMatrix,
 {
     const int N = distanceMatrix.size();
     vector<int> solution;
+    solution.reserve((N + 1) / 2);
     vector<uint8_t> is_in_sol(N, 0);
     if (starting_node < 0) {
         starting_node = rand() % N;
@@ -51,7 +62,7 @@ vector<int> nearestNeighborTSP(const vector<vector<int>>& distanceMatrix,
     is_in_sol[starting_node] = 1;
 
     int last = starting_node;
-    for (int i = 0; i < distanceMatrix.size() / 2; i++) {
+    for (int i = 0; i < (N + 1) / 2; i++) {
         int next = findNearestNeighbor(distanceMatrix, costs, last, solution, is_in_sol);
         solution.push_back(next);
         is_in_sol[next] = 1;
@@ -65,6 +76,7 @@ vector<int> nearestNeighborAnyTSP(const vector<vector<int>>& distanceMatrix,
 {
     const int N = distanceMatrix.size();
     vector<int> solution;
+    solution.reserve((N + 1) / 2);
     vector<uint8_t> is_in_sol(N, 0);
     if (starting_node < 0) {
         starting_node = rand() % N;
@@ -72,9 +84,9 @@ vector<int> nearestNeighborAnyTSP(const vector<vector<int>>& distanceMatrix,
     solution.push_back(starting_node);
     is_in_sol[starting_node] = 1;
 
-    for (int i = 0; i < N / 2; i++) {
+    for (int i = 0; i < (N + 1) / 2; i++) {
         int best_candidate = 0;
-        int best_impact = 1000000;
+        int best_impact = LARGE_SCORE;
         int candidate_index = 0;
         for (int position = 0; position < solution.size(); position++) {
             int candidate = findNearestNeighbor(distanceMatrix, costs, solution[position],
@@ -97,6 +109,7 @@ vector<int> greedyCycleTSP(const vector<vector<int>>& distanceMatrix,
 {
     const int N = distanceMatrix.size();
     vector<int> solution;
+    solution.reserve((N + 1) / 2);
     vector<uint8_t> is_in_sol(N, 0);
     if (starting_node < 0) {
         starting_node = rand() % N;
@@ -109,9 +122,9 @@ vector<int> greedyCycleTSP(const vector<vector<int>>& distanceMatrix,
     solution.push_back(candidate);
     is_in_sol[candidate] = 1;
 
-    for (int i = 0; i < N / 2 - 1; i++) {
+    for (int i = 0; i < ((N + 1) / 2) - 1; i++) {
         int best_candidate = 0;
-        int best_impact = 1000000;
+        int best_impact = LARGE_SCORE;
         int candidate_index = 0;
         int impact;
         for (int candidate = 0; candidate < N; candidate++)  // For each candidate
