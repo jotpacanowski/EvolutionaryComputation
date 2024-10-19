@@ -1,5 +1,6 @@
 #pragma once
 
+// NOLINTBEGIN
 #include <algorithm>
 #include <cerrno>
 #include <cmath>
@@ -25,4 +26,6 @@ using std::string;
 using std::string_view;
 using std::vector;
 
-namespace fs = std::filesystem;
+namespace fs = std::filesystem;  // NOLINT
+
+// NOLINTEND

@@ -1,4 +1,20 @@
 CompileFlags:
-  # Treat code as C++, use C++17 standard, enable more warnings.
+  # Treat code as C++, use C++20 standard, enable more warnings.
   # https://clangd.llvm.org/faq#can-you-give-an-example-configuration-file-for-clangd
-  Add: [-xc++, -std=c++20, -Wall, -Wno-missing-prototypes]
+  Add: [-std=c++20, -Wall, -Wno-missing-prototypes]
+
+Diagnostics:
+  UnusedIncludes: None
+  MissingIncludes: None
+  # UnusedIncludes: Strict
+  # MissingIncludes: Strict
+  ClangTidy:
+    # Add: [performance*, modernize*, readability*]
+    Add: [performance*, modernize*]
+    Remove:
+      [
+        modernize-use-trailing-return-type,
+        readability-braces-around-statements,
+        readability-identifier-length,
+        readability-magic-numbers,
+      ]
