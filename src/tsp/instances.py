@@ -3,8 +3,6 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 
-from . import config
-
 
 def read_instance_xyv_df(file_name: str | Path):
     inp = pd.read_csv(file_name, sep=";", header=None, names=["x", "y", "v"])
@@ -14,9 +12,11 @@ def read_instance_xyv_df(file_name: str | Path):
     return inp
 
 
-def read_instance_xyv(file_name: str | Path) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
+def read_instance_xyv(
+    file_name: str | Path,
+) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
     inp = read_instance_xyv_df(file_name)
-    node_costs = np.asarray(inp.y)
+    node_costs = np.asarray(inp.c)
     inp_points = np.asarray([inp.x, inp.y]).T
     assert inp_points.shape[1] == 2
     # TODO: check int64
