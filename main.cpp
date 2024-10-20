@@ -138,6 +138,7 @@ int main(int argc, char* argv[])
         {nearestNeighborTSP, "NN-end"},
         {nearestNeighborAnyTSP, "NN-any"},
         {greedyCycleTSP, "greedyCycle"},
+        {regret2TSP, "regret"},
     };
 
     latextables.clear();

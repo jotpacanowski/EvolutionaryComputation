@@ -21,3 +21,7 @@ vector<int> greedyCycleTSP(const vector<vector<int>>& distanceMatrix,
 
 vector<int> regret2TSP(const vector<vector<int>>& distanceMatrix,
                        const vector<int>& costs, int starting_node);
+
+vector<int> weightedSum2RegretTSP(const vector<vector<int>>& distanceMatrix,
+                                  const vector<int>& costs, int starting_node,
+                                  float objective_weight = 0.5);

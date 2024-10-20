@@ -135,10 +135,12 @@ vector<int> greedyCycleTSP(const vector<vector<int>>& distanceMatrix,
             for (int j = 0; j < solution.size(); j++)
             // Check insertion for candidate at each index
             {
-                auto a = solution[j];
-                auto b = solution[(j == 0) ? (solution.size() - 1) : (j - 1)];
-                impact = distanceMatrix[a][candidate] + distanceMatrix[b][candidate] -
-                         distanceMatrix[b][a] + costs[candidate];
+                auto before =
+                    solution[(j == 0) ? (solution.size() - 1) : (j - 1)];  // node before
+                auto after = solution[j];                                  // node after
+                impact = distanceMatrix[after][candidate] +
+                         distanceMatrix[before][candidate] -
+                         distanceMatrix[before][after] + costs[candidate];
 
                 if (impact < best_impact) {
                     best_impact = impact;
@@ -172,41 +174,112 @@ vector<int> regret2TSP(const vector<vector<int>>& distanceMatrix,
     is_in_sol[candidate] = 1;
 
     while (solution.size() < ((N + 1) / 2)) {
-        int best_candidate = 0;
+        std::pair<int, int> best_candidate = {0, 0};
         int best_impact = LARGE_SCORE;
+        int second_best_impact = LARGE_SCORE;
         int candidate_index = 0;
         int impact;
+        int highest_regret = -1;
         for (int candidate = 0; candidate < N; candidate++)  // For each candidate
         {
+            int regret;
             // If candidate already in solution, skip
-            if (is_in_sol[candidate]) {
-                continue;
-            }
+            if (is_in_sol[candidate]) continue;
             for (int j = 0; j < solution.size(); j++)
             // Check insertion for candidate at each index
             {
-                if (j == 0) {  // start and end of the solution
-                    impact = distanceMatrix[solution[j]][candidate] +
-                             distanceMatrix[solution.size() - 1][candidate] +
-                             costs[candidate];
-                }
-                else {  // insert between two nodes of solution
-                    impact = distanceMatrix[solution[j]][candidate] +
-                             distanceMatrix[solution[j - 1]][candidate] +
-                             costs[candidate];
-                }
+                auto before =
+                    solution[(j == 0) ? (solution.size() - 1) : (j - 1)];  // node before
+                auto after = solution[j];                                  // node after
+                impact = distanceMatrix[after][candidate] +
+                         distanceMatrix[before][candidate] -
+                         distanceMatrix[before][after] + costs[candidate];
+
                 if (impact < best_impact) {
                     best_impact = impact;
-                    best_candidate = candidate;
                     candidate_index = j;
                 }
+                else if (impact < second_best_impact) {
+                    second_best_impact = impact;
+                }
+            }
+            regret = second_best_impact - best_impact;
+            if (regret > highest_regret) {
+                highest_regret = regret;
+                best_candidate = {candidate, candidate_index};
             }
         }
         // cout << best_candidate << '\t' << candidate_index << endl;
         // return solution;
 
-        solution.insert(solution.begin() + candidate_index, best_candidate);
-        is_in_sol[best_candidate] = 1;
+        solution.insert(solution.begin() + best_candidate.second, best_candidate.first);
+        is_in_sol[best_candidate.first] = 1;
+    }
+    return solution;
+}
+
+vector<int> weightedSum2RegretTSP(const vector<vector<int>>& distanceMatrix,
+                                  const vector<int>& costs, int starting_node,
+                                  float objective_weight = 0.5)
+{
+    const int N = distanceMatrix.size();
+    vector<int> solution;
+    solution.reserve((N + 1) / 2);
+    vector<uint8_t> is_in_sol(N, 0);
+    if (starting_node < 0) {
+        starting_node = rand() % N;
+    }
+    solution.push_back(starting_node);
+    is_in_sol[starting_node] = 1;
+
+    int candidate =
+        findNearestNeighbor(distanceMatrix, costs, starting_node, solution, is_in_sol);
+    solution.push_back(candidate);
+    is_in_sol[candidate] = 1;
+
+    while (solution.size() < ((N + 1) / 2)) {
+        std::pair<int, int> best_candidate = {0, 0};
+        int best_impact = LARGE_SCORE;
+        int second_best_impact = LARGE_SCORE;
+        int candidate_index = 0;
+        int impact;
+        float best_criterion = -1;
+        for (int candidate = 0; candidate < N; candidate++)  // For each candidate
+        {
+            int regret;
+            // If candidate already in solution, skip
+            if (is_in_sol[candidate]) continue;
+            for (int j = 0; j < solution.size(); j++)
+            // Check insertion for candidate at each index
+            {
+                auto before =
+                    solution[(j == 0) ? (solution.size() - 1) : (j - 1)];  // node before
+                auto after = solution[j];                                  // node after
+                impact = distanceMatrix[after][candidate] +
+                         distanceMatrix[before][candidate] -
+                         distanceMatrix[before][after] + costs[candidate];
+
+                if (impact < best_impact) {
+                    best_impact = impact;
+                    candidate_index = j;
+                }
+                else if (impact < second_best_impact) {
+                    second_best_impact = impact;
+                }
+            }
+            regret = second_best_impact - best_impact;
+            float total_criterion =
+                objective_weight * best_impact + (1 - objective_weight) * regret;
+            if (total_criterion > best_criterion) {
+                total_criterion = best_criterion;
+                best_candidate = {candidate, candidate_index};
+            }
+        }
+        // cout << best_candidate << '\t' << candidate_index << endl;
+        // return solution;
+
+        solution.insert(solution.begin() + best_candidate.second, best_candidate.first);
+        is_in_sol[best_candidate.first] = 1;
     }
     return solution;
 }
