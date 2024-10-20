@@ -1,6 +1,8 @@
 # /results/
 
 .vscode/
+./main
+./main.exe
 
 # Data
 /data/
