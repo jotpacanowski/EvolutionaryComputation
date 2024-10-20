@@ -1,3 +1,5 @@
+#include <iostream>
+
 #include "headers.hpp"
 
 vector<int> randomTSP(const vector<vector<int>>& distanceMatrix, const vector<int>& costs,
@@ -134,32 +136,80 @@ vector<int> greedyCycleTSP(const vector<vector<int>>& distanceMatrix,
             for (int j = 0; j < solution.size(); j++)
             // Check insertion for candidate at each index
             {
-                if (j == 0) {
-                    // cout <<"INSERT AT 0, BETWEEEN: "<<  solution[j] << ' ' <<
-                    // candidate << solution[solution.size() - 1] << endl;
-
+                if (j == 0) {  // start and end of the solution
                     impact = distanceMatrix[solution[j]][candidate] +
-                             distanceMatrix[solution.size() - 1][candidate] +
-                             costs[candidate];
+                             distanceMatrix[solution.size() - 1][candidate] -
+                             distanceMatrix[solution.size() - 1][j] + costs[candidate];
                 }
-                else {
-                    // cout << solution[j - 1] << ' ' << candidate << solution[j] <<
-                    // endl;
-
+                else {  // insert between two nodes of solution
                     impact = distanceMatrix[solution[j]][candidate] +
-                             distanceMatrix[solution[j - 1]][candidate] +
-                             costs[candidate];
+                             distanceMatrix[solution[j - 1]][candidate] -
+                             distanceMatrix[j - 1][j] + costs[candidate];
                 }
-                // cout<<"IMPACT: " << impact<<endl;
                 if (impact < best_impact) {
                     best_impact = impact;
                     best_candidate = candidate;
-                    // cout << "Better impact: " << best_impact << endl;
-
                     candidate_index = j;
                 }
             }
         }
+        solution.insert(solution.begin() + candidate_index, best_candidate);
+        is_in_sol[best_candidate] = 1;
+    }
+    return solution;
+}
+
+vector<int> regret2TSP(const vector<vector<int>>& distanceMatrix,
+                       const vector<int>& costs, int starting_node)
+{
+    const int N = distanceMatrix.size();
+    vector<int> solution;
+    solution.reserve((N + 1) / 2);
+    vector<uint8_t> is_in_sol(N, 0);
+    if (starting_node < 0) {
+        starting_node = rand() % N;
+    }
+    solution.push_back(starting_node);
+    is_in_sol[starting_node] = 1;
+
+    int candidate =
+        findNearestNeighbor(distanceMatrix, costs, starting_node, solution, is_in_sol);
+    solution.push_back(candidate);
+    is_in_sol[candidate] = 1;
+
+    while (solution.size() < ((N + 1) / 2)) {
+        int best_candidate = 0;
+        int best_impact = LARGE_SCORE;
+        int candidate_index = 0;
+        int impact;
+        for (int candidate = 0; candidate < N; candidate++)  // For each candidate
+        {
+            // If candidate already in solution, skip
+            if (is_in_sol[candidate]) {
+                continue;
+            }
+            for (int j = 0; j < solution.size(); j++)
+            // Check insertion for candidate at each index
+            {
+                if (j == 0) {  // start and end of the solution
+                    impact = distanceMatrix[solution[j]][candidate] +
+                             distanceMatrix[solution.size() - 1][candidate] +
+                             costs[candidate];
+                }
+                else {  // insert between two nodes of solution
+                    impact = distanceMatrix[solution[j]][candidate] +
+                             distanceMatrix[solution[j - 1]][candidate] +
+                             costs[candidate];
+                }
+                if (impact < best_impact) {
+                    best_impact = impact;
+                    best_candidate = candidate;
+                    candidate_index = j;
+                }
+            }
+        }
+        // cout << best_candidate << '\t' << candidate_index << endl;
+        // return solution;
 
         solution.insert(solution.begin() + candidate_index, best_candidate);
         is_in_sol[best_candidate] = 1;
