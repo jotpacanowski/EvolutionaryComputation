@@ -9,10 +9,10 @@ vector<int> randomTSP(const vector<vector<int>>& distanceMatrix, const vector<in
     for (int i = 0; i < N; i++) {
         solution.push_back(i);
     }
-    std::random_device rd;
-    std::mt19937 g(rd());
+    // std::random_device rd;
+    // std::mt19937 g(rd());
     // deterministic:
-    // std::mt19937 g(5 * seed);
+    std::mt19937 g(3 * seed);
 
     std::shuffle(solution.begin(), solution.end(), g);
     solution.resize((N + 1) / 2);
