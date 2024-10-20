@@ -131,21 +131,15 @@ vector<int> greedyCycleTSP(const vector<vector<int>>& distanceMatrix,
         int impact;
         for (int candidate = 0; candidate < N; candidate++)  // For each candidate
         {
-            // If candidate already in solution, skip
             if (is_in_sol[candidate]) continue;
             for (int j = 0; j < solution.size(); j++)
             // Check insertion for candidate at each index
             {
-                if (j == 0) {  // start and end of the solution
-                    impact = distanceMatrix[solution[j]][candidate] +
-                             distanceMatrix[solution.size() - 1][candidate] -
-                             distanceMatrix[solution.size() - 1][j] + costs[candidate];
-                }
-                else {  // insert between two nodes of solution
-                    impact = distanceMatrix[solution[j]][candidate] +
-                             distanceMatrix[solution[j - 1]][candidate] -
-                             distanceMatrix[j - 1][j] + costs[candidate];
-                }
+                auto a = solution[j];
+                auto b = solution[(j == 0) ? (solution.size() - 1) : (j - 1)];
+                impact = distanceMatrix[a][candidate] + distanceMatrix[b][candidate] -
+                         distanceMatrix[b][a] + costs[candidate];
+
                 if (impact < best_impact) {
                     best_impact = impact;
                     best_candidate = candidate;
