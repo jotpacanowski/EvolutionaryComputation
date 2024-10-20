@@ -1,9 +1,15 @@
 # Evolutionary TSP
 
-TODO: A short description of the project.
 
-## Setup
+To compile and run C++ program:
 
 ```
-pip install -e .
+make all
+make run
+```
+
+Command to visualize solutions:
+
+```
+python prepare-plots.py
 ```
