@@ -1,3 +1,5 @@
+#include <sstream>
+
 #include "headers.hpp"
 #include "reading.hpp"
 #include "solvers.hpp"
@@ -48,6 +50,26 @@ void printResults(const vector<int>& sol, bool toFile = false,
     }
 }
 
+static std::stringstream latextables;
+
+std::string format_with_spaces(long long number)
+{
+    auto str = std::to_string(number);
+    int n = str.length() - 3;
+    while (n > 0) {
+        str.insert(n, " ");
+        n -= 3;
+    }
+    return str;
+}
+
+std::string format_with_spaces(double number)
+{
+    auto [integral, fractional] = std::div(static_cast<long long>(number * 1000), 1000ll);
+    auto int_part = format_with_spaces(integral);
+    return std::format("{}.{:03}", int_part, std::abs(fractional));
+}
+
 void evalWithStarting(const TSPInstance& instance, TSPSolverStarting solver,
                       string_view solver_name, string_view instance_name)
 {
@@ -78,15 +100,23 @@ void evalWithStarting(const TSPInstance& instance, TSPSolverStarting solver,
         average_denominator += 1;
     }
 
+    if (instance_name.ends_with(".csv")) {
+        instance_name.remove_suffix(4);
+    }
+    latextables << std::format(
+        // "{:6} & {:>7} & {:>11.3f} & {:>7} \\\\\n",
+        "{:12} & {:>7} & {:>12} & {:>7} \\\\\n", solver_name,
+        // format values
+        format_with_spaces((long long)best_sol_value),
+        format_with_spaces((double)(average_numerator) / average_denominator),
+        format_with_spaces((long long)worst_sol_value));
+
     cout << std::format(
         "   best: {:>7}\n"
         "average: {:>11.3f}\n"
         "  worst: {:>7}\n",
         best_sol_value, (double)(average_numerator) / average_denominator,
         worst_sol_value);
-    if (instance_name.ends_with(".csv")) {
-        instance_name.remove_suffix(4);
-    }
     printResults(best_sol, true,
                  std::format("{}_{}_best.txt", instance_name, solver_name));
     printResults(worst_sol, true,
@@ -110,10 +140,13 @@ int main(int argc, char* argv[])
         {greedyCycleTSP, "greedyCycle"},
     };
 
+    latextables.clear();
     for (auto it : WHAT_TO_RUN) {
         auto [solver, name] = it;
         cerr << std::format("\x1b[32m {} \x1b[0m", name) << endl;
+        // latextables << "  method " << name << endl;
         evalWithStarting(inst, solver, name, input_file_name);
     }
+    cerr << "Results for " << input_file_name << ":\n" << latextables.view() << endl;
     return 0;
 }
