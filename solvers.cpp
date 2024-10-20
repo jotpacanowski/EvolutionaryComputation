@@ -62,7 +62,7 @@ vector<int> nearestNeighborTSP(const vector<vector<int>>& distanceMatrix,
     is_in_sol[starting_node] = 1;
 
     int last = starting_node;
-    for (int i = 0; i < (N + 1) / 2; i++) {
+    while (solution.size() < ((N + 1) / 2)) {
         int next = findNearestNeighbor(distanceMatrix, costs, last, solution, is_in_sol);
         solution.push_back(next);
         is_in_sol[next] = 1;
@@ -84,7 +84,7 @@ vector<int> nearestNeighborAnyTSP(const vector<vector<int>>& distanceMatrix,
     solution.push_back(starting_node);
     is_in_sol[starting_node] = 1;
 
-    for (int i = 0; i < (N + 1) / 2; i++) {
+    while (solution.size() < ((N + 1) / 2)) {
         int best_candidate = 0;
         int best_impact = LARGE_SCORE;
         int candidate_index = 0;
@@ -122,7 +122,7 @@ vector<int> greedyCycleTSP(const vector<vector<int>>& distanceMatrix,
     solution.push_back(candidate);
     is_in_sol[candidate] = 1;
 
-    for (int i = 0; i < ((N + 1) / 2) - 1; i++) {
+    while (solution.size() < ((N + 1) / 2)) {
         int best_candidate = 0;
         int best_impact = LARGE_SCORE;
         int candidate_index = 0;
