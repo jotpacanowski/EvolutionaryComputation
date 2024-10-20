@@ -1,10 +1,10 @@
 # %%
-import math  # noqa: F401
 from pathlib import Path
 
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
+
 # import typer
 
 # FIGSIZE = (10, 8)
@@ -70,6 +70,7 @@ DISPLAY_TITLE = {
     "nn-end": "Nearest Neighbor (last only)",
     "nn-any": "Nearest Neighbor (any)",
     "greedycycle": "Greedy Cycle",
+    "regret": "2-regret"
 }
 
 # %%

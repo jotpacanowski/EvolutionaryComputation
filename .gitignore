@@ -3,6 +3,7 @@
 .vscode/
 ./main
 ./main.exe
+main
 
 # Data
 /data/
