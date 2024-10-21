@@ -71,6 +71,8 @@ DISPLAY_TITLE = {
     "nn-any": "Nearest Neighbor (any)",
     "greedycycle": "Greedy Cycle",
     "regret": "2-regret",
+    # "regret": "2-Regret Greedy",
+    "w-regret": "weighted 2-Regret",
 }
 
 # %%

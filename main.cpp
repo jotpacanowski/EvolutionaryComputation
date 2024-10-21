@@ -126,8 +126,10 @@ void evalWithStarting(const TSPInstance& instance, TSPSolverStarting solver,
 void weightedExperiments(const TSPInstance& inst)
 {
     for (int param = 1; param < 10; param++) {
-        cerr << std::format("\x1b[32m {} \x1b[0m", "weighted") << endl;
-        cout<<static_cast<float>(param) / 10<<endl;
+        float objective_weight = static_cast<float>(param) / 10;
+        cerr << std::format("\x1b[32m {} with weight = {} \x1b[0m", "weighted",
+                            objective_weight)
+             << endl;
 
         vector<int> best_sol;
         int best_sol_value = LARGE_SCORE;
@@ -140,8 +142,8 @@ void weightedExperiments(const TSPInstance& inst)
 
         // Generating 200 random solutions, keeping the best and the worst ones.
         for (int i = 0; i < 200; i++) {
-            auto sol = weightedSum2RegretTSP(inst.distances, inst.costs, i,
-                                             static_cast<float>(param) / 10);
+            auto sol =
+                weightedSum2RegretTSP(inst.distances, inst.costs, i, objective_weight);
             int value = inst.evaluateSolution(sol);
             if (value < best_sol_value) {
                 best_sol_value = value;
@@ -183,6 +185,11 @@ int main(int argc, char* argv[])
         {nearestNeighborAnyTSP, "NN-any"},
         {greedyCycleTSP, "greedyCycle"},
         {regret2TSP, "regret"},
+        {[](const vector<vector<int>>& d, const vector<int>& costs, int starting_node) {
+             // hard-coded weight
+             return weightedSum2RegretTSP(d, costs, starting_node, 0.5);
+         },
+         "w-regret"},
     };
 
     latextables.clear();
@@ -193,6 +200,6 @@ int main(int argc, char* argv[])
         evalWithStarting(inst, solver, name, input_file_name);
     }
     cerr << "Results for " << input_file_name << ":\n" << latextables.view() << endl;
-    weightedExperiments(inst);
+    // weightedExperiments(inst);
     return 0;
 }
