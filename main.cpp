@@ -85,6 +85,8 @@ void evalWithStarting(const TSPInstance& instance, TSPSolverStarting solver,
     long long average_numerator = 0;
     long long average_denominator = 0;
 
+    Stopwatch tic;
+
     // Generating 200 random solutions, keeping the best and the worst ones.
     for (int i = 0; i < 200; i++) {
         auto sol = solver(instance.distances, instance.costs, i);
@@ -100,6 +102,8 @@ void evalWithStarting(const TSPInstance& instance, TSPSolverStarting solver,
         average_numerator += value;
         average_denominator += 1;
     }
+
+    cout << std::format("Took {}\n", tic.pretty_print());
 
     if (instance_name.ends_with(".csv")) {
         instance_name.remove_suffix(4);
