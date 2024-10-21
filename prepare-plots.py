@@ -70,7 +70,7 @@ DISPLAY_TITLE = {
     "nn-end": "Nearest Neighbor (last only)",
     "nn-any": "Nearest Neighbor (any)",
     "greedycycle": "Greedy Cycle",
-    "regret": "2-regret"
+    "regret": "2-regret",
 }
 
 # %%

@@ -123,6 +123,50 @@ void evalWithStarting(const TSPInstance& instance, TSPSolverStarting solver,
                  std::format("{}_{}_worst.txt", instance_name, solver_name));
 }
 
+void weightedExperiments(const TSPInstance& inst)
+{
+    for (int param = 1; param < 10; param++) {
+        cerr << std::format("\x1b[32m {} \x1b[0m", "weighted") << endl;
+        cout<<static_cast<float>(param) / 10<<endl;
+
+        vector<int> best_sol;
+        int best_sol_value = LARGE_SCORE;
+
+        vector<int> worst_sol;
+        int worst_sol_value = 0;
+
+        long long average_numerator = 0;
+        long long average_denominator = 0;
+
+        // Generating 200 random solutions, keeping the best and the worst ones.
+        for (int i = 0; i < 200; i++) {
+            auto sol = weightedSum2RegretTSP(inst.distances, inst.costs, i,
+                                             static_cast<float>(param) / 10);
+            int value = inst.evaluateSolution(sol);
+            if (value < best_sol_value) {
+                best_sol_value = value;
+                best_sol = sol;
+            }
+            if (value > worst_sol_value) {
+                worst_sol_value = value;
+                worst_sol = sol;
+            }
+            average_numerator += value;
+            average_denominator += 1;
+        }
+
+        cout << std::format(
+            "   best: {:>7}\n"
+            "average: {:>11.3f}\n"
+            "  worst: {:>7}\n",
+            best_sol_value, (double)(average_numerator) / average_denominator,
+            worst_sol_value);
+        printResults(best_sol, true,
+                     std::format("{}_{}_{}_best.txt", "TSPA", "weighted", param));
+        printResults(worst_sol, true,
+                     std::format("{}_{}_{}_worst.txt", "TSPA", "weighted", param));
+    }
+}
 int main(int argc, char* argv[])
 {
     const char* input_file_name = "TSPA.csv";
@@ -149,5 +193,6 @@ int main(int argc, char* argv[])
         evalWithStarting(inst, solver, name, input_file_name);
     }
     cerr << "Results for " << input_file_name << ":\n" << latextables.view() << endl;
+    weightedExperiments(inst);
     return 0;
 }

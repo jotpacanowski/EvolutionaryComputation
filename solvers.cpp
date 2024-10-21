@@ -175,14 +175,15 @@ vector<int> regret2TSP(const vector<vector<int>>& distanceMatrix,
 
     while (solution.size() < ((N + 1) / 2)) {
         std::pair<int, int> best_candidate = {0, 0};
-        int best_impact = LARGE_SCORE;
-        int second_best_impact = LARGE_SCORE;
-        int candidate_index = 0;
-        int impact;
         int highest_regret = -1;
+
         for (int candidate = 0; candidate < N; candidate++)  // For each candidate
         {
             int regret;
+            int best_impact = LARGE_SCORE;
+            int second_best_impact = LARGE_SCORE;
+            int candidate_index = 0;
+            int impact;
             // If candidate already in solution, skip
             if (is_in_sol[candidate]) continue;
             for (int j = 0; j < solution.size(); j++)
@@ -196,6 +197,7 @@ vector<int> regret2TSP(const vector<vector<int>>& distanceMatrix,
                          distanceMatrix[before][after] + costs[candidate];
 
                 if (impact < best_impact) {
+                    second_best_impact = best_impact;
                     best_impact = impact;
                     candidate_index = j;
                 }
@@ -209,8 +211,6 @@ vector<int> regret2TSP(const vector<vector<int>>& distanceMatrix,
                 best_candidate = {candidate, candidate_index};
             }
         }
-        // cout << best_candidate << '\t' << candidate_index << endl;
-        // return solution;
 
         solution.insert(solution.begin() + best_candidate.second, best_candidate.first);
         is_in_sol[best_candidate.first] = 1;
@@ -239,14 +239,14 @@ vector<int> weightedSum2RegretTSP(const vector<vector<int>>& distanceMatrix,
 
     while (solution.size() < ((N + 1) / 2)) {
         std::pair<int, int> best_candidate = {0, 0};
-        int best_impact = LARGE_SCORE;
-        int second_best_impact = LARGE_SCORE;
-        int candidate_index = 0;
-        int impact;
-        float best_criterion = -1;
+        float best_criterion = -LARGE_SCORE;
         for (int candidate = 0; candidate < N; candidate++)  // For each candidate
         {
             int regret;
+            int best_impact = LARGE_SCORE;
+            int second_best_impact = LARGE_SCORE;
+            int candidate_index = 0;
+            int impact;
             // If candidate already in solution, skip
             if (is_in_sol[candidate]) continue;
             for (int j = 0; j < solution.size(); j++)
@@ -269,9 +269,11 @@ vector<int> weightedSum2RegretTSP(const vector<vector<int>>& distanceMatrix,
             }
             regret = second_best_impact - best_impact;
             float total_criterion =
-                objective_weight * best_impact + (1 - objective_weight) * regret;
+                (-1 * best_impact) * (objective_weight) + regret * (1 - objective_weight);
+            // cout << " REGRET: " << regret << " IMPACT: " << best_impact
+            //  << " CRITERION: " << total_criterion << " BEST: " <<best_criterion <<endl;
             if (total_criterion > best_criterion) {
-                total_criterion = best_criterion;
+                best_criterion = total_criterion;
                 best_candidate = {candidate, candidate_index};
             }
         }
