@@ -1,6 +1,7 @@
 #include <sstream>
 
 #include "headers.hpp"
+#include "local_search.hpp"
 #include "reading.hpp"
 #include "solvers.hpp"
 

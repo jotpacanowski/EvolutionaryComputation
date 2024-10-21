@@ -8,7 +8,7 @@ CXXFLAGS += -Wall -Wno-sign-compare
 
 TARGET = main
 BUILD_DIR = build
-SRCS := main.cpp solvers.cpp
+SRCS := main.cpp solvers.cpp local_search.cpp
 OBJS := $(SRCS:%.cpp=$(BUILD_DIR)/%.cpp.o)
 DEPS := $(OBJS:.cpp.o=.cpp.d)
 
