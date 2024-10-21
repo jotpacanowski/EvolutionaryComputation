@@ -8,7 +8,8 @@ import pandas as pd
 # import typer
 
 # FIGSIZE = (10, 8)
-FIGSIZE = (6, 4)
+# FIGSIZE = (6, 4)
+FIGSIZE = (6, 3.1)
 DPI = 200
 
 # plt.style.use('ggplot')
@@ -138,6 +139,9 @@ def plot_tsp(df, seq=None, title="TSP", show=True):
             alpha=0.5,
         )
 
+    # equal scaling for both axes
+    plt.gca().set_aspect("equal", adjustable="box")
+
     ax.set_xlabel("X Coordinate")
     ax.set_ylabel("Y Coordinate")
     ax.set_title(title)
@@ -178,6 +182,7 @@ def main():
         plt.savefig(PLOTOUT / f"{inst}_{baw}_{method}.png", dpi=DPI)
         # plt.show()
 
+        print("")
         s = r"""
 \begin{figure}[H] \centering
     \includegraphics[width=\textwidth]{res/plot}
@@ -186,7 +191,13 @@ def main():
         # % \caption{Instance ``A''}
         # % \label{fig:instanceA}
         s = s.replace("res/plot", f"plots/{inst}_{baw}_{method}")
-        print(s)
+        print(s.strip())
+
+        print(r"\begin{verbatim}")
+        print("[", end="")
+        print(*sol, sep=", ", end="]\n")
+        print(r"\end{verbatim}")
+        print("")
 
 
 if __name__ == "__main__":
