@@ -1,4 +1,5 @@
 #include <sstream>
+#include <vector>
 
 #include "headers.hpp"
 #include "local_search.hpp"
@@ -174,37 +175,62 @@ void weightedExperiments(const TSPInstance& inst)
                      std::format("{}_{}_{}_worst.txt", "TSPA", "weighted", param));
     }
 }
+
+
+
 int main(int argc, char* argv[])
 {
-    const char* input_file_name = "TSPA.csv";
+    const char* input_file_name = "a.csv";
     if (argc >= 2) {
         const auto arg = argv[1];
         // if (fs::exists(arg)) {
         input_file_name = arg;
     }
     const auto inst = TSPInstance::readFromFile(input_file_name);
-
-    const std::pair<TSPSolverStarting*, const char*> WHAT_TO_RUN[] = {
-        {randomTSP, "random"},
-        {nearestNeighborTSP, "NN-end"},
-        {nearestNeighborAnyTSP, "NN-any"},
-        {greedyCycleTSP, "greedyCycle"},
-        {regret2TSP, "regret"},
-        {[](const vector<vector<int>>& d, const vector<int>& costs, int starting_node) {
-             // hard-coded weight
-             return weightedSum2RegretTSP(d, costs, starting_node, 0.5);
-         },
-         "w-regret"},
-    };
-
-    latextables.clear();
-    for (auto it : WHAT_TO_RUN) {
-        auto [solver, name] = it;
-        cerr << std::format("\x1b[32m {} \x1b[0m", name) << endl;
-        // latextables << "  method " << name << endl;
-        evalWithStarting(inst, solver, name, input_file_name);
+    // vector<int> v{1, 0, 3, 2, 4};
+    vector<int> v{3,0,1,2,4};
+    for (vector<int> a : inst.distances) {
+        for (int b : a) {
+            cout << b << '\t';
+        }
+        cout << endl;
     }
-    cerr << "Results for " << input_file_name << ":\n" << latextables.view() << endl;
-    // weightedExperiments(inst);
+
+    cout << "OLD SCORE: " << inst.evaluateSolution(v) << endl;
+
+    for (int x : v) {
+        cout << x << endl;
+    }
+    vector<int> sol2 = localSearch(v, inst.distances, inst.costs);
+
+    for (int b : sol2) {
+        cout << b << '\t';
+    }
+    cout << "NEW SCORE: " << inst.evaluateSolution(sol2) << endl;
+
+    // const std::pair<TSPSolverStarting*, const char*> WHAT_TO_RUN[] = {
+    //     {randomTSP, "random"},
+    //     {nearestNeighborTSP, "NN-end"},
+    //     {nearestNeighborAnyTSP, "NN-any"},
+    //     {greedyCycleTSP, "greedyCycle"},
+    //     {regret2TSP, "regret"},
+    //     {[](const vector<vector<int>>& d, const vector<int>& costs, int
+    //     starting_node)
+    //     {
+    //          // hard-coded weight
+    //          return weightedSum2RegretTSP(d, costs, starting_node, 0.5);
+    //      },
+    //      "w-regret"},
+    // };
+
+    // latextables.clear();
+    // for (auto it : WHAT_TO_RUN) {
+    //     auto [solver, name] = it;
+    //     cerr << std::format("\x1b[32m {} \x1b[0m", name) << endl;
+    //     // latextables << "  method " << name << endl;
+    //     evalWithStarting(inst, solver, name, input_file_name);
+    // }
+    // cerr << "Results for " << input_file_name << ":\n" << latextables.view() <<
+    // endl; weightedExperiments(inst);
     return 0;
 }
