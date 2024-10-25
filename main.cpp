@@ -193,9 +193,14 @@ int main(int argc, char* argv[])
     vector<int> sol2_nodes = localSearch(sol1, inst.distances, inst.costs, sol1.size());
     vector<int> sol2_edges =
         localSearch(sol1, inst.distances, inst.costs, sol1.size(), true);
-
+    vector<int> sol2_nodes_greedy =
+        localSearchGreedy(sol1, inst.distances, inst.costs, sol1.size());
+    vector<int> sol2_edges_greedy =
+        localSearchGreedy(sol1, inst.distances, inst.costs, sol1.size(), true);
     cout << "NEW SCORE NODES: " << inst.evaluateSolution(sol2_nodes) << endl;
+    cout << "NEW SCORE NODES GREEDY: " << inst.evaluateSolution(sol2_nodes_greedy) << endl;
     cout << "NEW SCORE EDGES: " << inst.evaluateSolution(sol2_edges) << endl;
+    cout << "NEW SCORE EDGES GREEDY: " << inst.evaluateSolution(sol2_edges_greedy) << endl;
 
     printResults(sol2_nodes, true, "local_test.txt");
     // const std::pair<TSPSolverStarting*, const char*> WHAT_TO_RUN[] = {
