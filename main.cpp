@@ -176,38 +176,28 @@ void weightedExperiments(const TSPInstance& inst)
     }
 }
 
-
-
 int main(int argc, char* argv[])
 {
-    const char* input_file_name = "a.csv";
+    const char* input_file_name = "TSPA.csv";
     if (argc >= 2) {
         const auto arg = argv[1];
         // if (fs::exists(arg)) {
         input_file_name = arg;
     }
     const auto inst = TSPInstance::readFromFile(input_file_name);
-    // vector<int> v{1, 0, 3, 2, 4};
-    vector<int> v{3,0,1,2,4};
-    for (vector<int> a : inst.distances) {
-        for (int b : a) {
-            cout << b << '\t';
-        }
-        cout << endl;
-    }
 
-    cout << "OLD SCORE: " << inst.evaluateSolution(v) << endl;
+    vector<int> sol1 = weightedSum2RegretTSP(inst.distances, inst.costs, 0, 0.5);
+    // randomTSP(inst.distances, inst.costs, 0);
 
-    for (int x : v) {
-        cout << x << endl;
-    }
-    vector<int> sol2 = localSearch(v, inst.distances, inst.costs);
+    cout << "OLD SCORE: " << inst.evaluateSolution(sol1) << endl;
+    vector<int> sol2_nodes = localSearch(sol1, inst.distances, inst.costs, sol1.size());
+    vector<int> sol2_edges =
+        localSearch(sol1, inst.distances, inst.costs, sol1.size(), true);
 
-    for (int b : sol2) {
-        cout << b << '\t';
-    }
-    cout << "NEW SCORE: " << inst.evaluateSolution(sol2) << endl;
+    cout << "NEW SCORE NODES: " << inst.evaluateSolution(sol2_nodes) << endl;
+    cout << "NEW SCORE EDGES: " << inst.evaluateSolution(sol2_edges) << endl;
 
+    printResults(sol2_nodes, true, "local_test.txt");
     // const std::pair<TSPSolverStarting*, const char*> WHAT_TO_RUN[] = {
     //     {randomTSP, "random"},
     //     {nearestNeighborTSP, "NN-end"},

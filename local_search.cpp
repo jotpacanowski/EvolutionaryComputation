@@ -60,43 +60,79 @@ int intraSwapTwoEdgesImpact(const vector<int> &solution, int id1, int id2,
     return delta;
 }
 
-int interSwapTwoNodesImpact(const vector<int> &solution, int idx,
+int interSwapTwoNodesImpact(const vector<int> &solution, int idx, int external_node,
                             const vector<vector<int>> &distanceMatrix,
-                            const int solution_size, const vector<uint8_t> &is_in_sol)
+                            const vector<int> &costs, const int solution_size)
 {
+    int internal_node = solution[idx];
+
+    int delta;
+
+    int prev1 = idx == 0 ? solution[(solution_size - 1)] : solution[idx - 1];
+    int next1 = idx == (solution_size - 1) ? solution[0] : solution[idx + 1];
+    // int prev2 = id2 == 0 ? solution[(solution_size - 1)] : solution[id2 - 1];
+    // int next2 = id2 == (solution_size - 1) ? solution[0] : solution[id2 + 1];
+
+    delta = -distanceMatrix[prev1][internal_node] + distanceMatrix[prev1][external_node] -
+            distanceMatrix[internal_node][next1] + distanceMatrix[external_node][next1] -
+            costs[internal_node] + costs[external_node];
+    return delta;
+}
+
+int findIndex(const vector<int> &arr, int item)
+{  // https://www.delftstack.com/howto/cpp/find-in-vector-in-cpp/
+    // GŁUPIE, PEWNIE MOŻNA ŁATWO ZMIENIĆ
+    auto ret = std::find(arr.begin(), arr.end(), item);
+    if (ret != arr.end()) return ret - arr.begin();
+    return -1;
 }
 
 vector<int> localSearch(vector<int> solution, const vector<vector<int>> &distanceMatrix,
-                        const vector<int> &costs)
+                        const vector<int> &costs, const int solution_size,
+                        bool edges = false)
 {
     int variable = 0;
     int delta;
     int highest_delta = 0;
-    int pos1;
-    int pos2;
+    int pos1, pos2;
     bool found = false;
-    vector<uint8_t> is_in_sol(costs.size(), 0);
-    for (const int node : solution) {
-        is_in_sol[node] = 1;
+    int best_external, best_internal;
+    vector<int> in_sol;
+    vector<int> not_in_sol;
+    not_in_sol.reserve(distanceMatrix.size() - solution_size);
+    in_sol.reserve(solution_size);
+    for (int i = 0; i < distanceMatrix.size(); i++) {
+        if (std::find(solution.begin(), solution.end(), i) != solution.end()) {
+            in_sol.push_back(i);
+        }
+        else {
+            not_in_sol.push_back(i);
+        }
     }
-    cout << "SIZE: " << solution.size() << endl;
+    int patience = 10;
+    std::random_device rd;
+    std::mt19937 g(rd());
 
-    //     variable = rand() % 2;
-    for (int _ = 0; _ < 1000; _++) {
-        // if (variable == 0) {  // Do only intra moves
-            for (int i1 = 0; i1 < solution.size(); i1++) {
-                for (int i2 = 0; i2 < solution.size(); i2++) {
-                    delta = intraSwapTwoNodesImpact(
-                        solution, i1, i2, distanceMatrix,
-                        solution.size());  // Swap two nodes variation
-                    // delta = intraSwapTwoEdgesImpact(
-                    //     solution, i1, i2, distanceMatrix,
-                    //     solution.size());  // Swap two edges variation
+    std::shuffle(not_in_sol.begin(), not_in_sol.end(), g);
+    std::shuffle(in_sol.begin(), in_sol.end(), g);
+    cout << "SIZE: " << solution_size << endl;
+
+    for (int _ = 0; _ < 1000000; _++) {  // some arbitrary limit
+        variable = rand() % 2;
+        if (variable == 0) {  // Do intra moves
+            for (int i1 = 0; i1 < solution_size; i1++) {
+                for (int i2 = 0; i2 < i1; i2++) {
+                    if (edges) {  // Swap two edges variation
+                        delta = intraSwapTwoEdgesImpact(solution, i1, i2, distanceMatrix,
+                                                        solution_size);
+                    }
+                    else {  // Swap two nodes variation
+                        delta = intraSwapTwoNodesImpact(solution, i1, i2, distanceMatrix,
+                                                        solution_size);
+                    }
 
                     delta = -delta;               // WE WANT IMPROVEMENT -> smaller score
                     if (delta > highest_delta) {  // Steepest variation
-                        cout << "NEW HIGHEST DELTA: " << delta << endl;
-                        cout << i1 << '\t' << i2 << endl;
                         highest_delta = delta;
                         pos1 = i1;
                         pos2 = i2;
@@ -104,21 +140,55 @@ vector<int> localSearch(vector<int> solution, const vector<vector<int>> &distanc
                     }
                 }
             }
-            cout << "FOUND: " << found << endl;
-            if (found) {
-                found = false;
-                // reverse(solution.begin()+pos1,solution.begin()+pos2+1);
-                iter_swap(solution.begin() + pos1, solution.begin() + pos2);
-                continue;
+        }
+        else {  // Do inter moves
+            for (int internal : in_sol) {
+                int idx = findIndex(solution, internal);
+                for (int external : not_in_sol) {
+                    delta = interSwapTwoNodesImpact(solution, idx, external,
+                                                    distanceMatrix, costs, solution_size);
+                    delta = -delta;               // WE WANT IMPROVEMENT -> smaller score
+                    if (delta > highest_delta) {  // Steepest variation
+                        highest_delta = delta;
+                        best_external = external;
+                        best_internal = internal;
+                        pos1 = idx;
+                        found = true;
+                    }
+                }
+            }
+
+            std::shuffle(not_in_sol.begin(), not_in_sol.end(), g);
+            std::shuffle(in_sol.begin(), in_sol.end(), g);
+        }
+        if (found) {
+            found = false;
+            highest_delta = 0;
+
+            if (variable == 0) {
+                if (edges) {
+                    reverse(solution.begin() + pos1, solution.begin() + pos2);
+                }
+                else {
+                    iter_swap(solution.begin() + pos1, solution.begin() + pos2);
+                }
             }
             else {
-                cout << "No further improvement found" << endl;
+                solution[pos1] = best_external;
+                std::erase(in_sol, best_internal);
+                in_sol.push_back(best_external);
+                std::erase(not_in_sol, best_external);
+                not_in_sol.push_back(best_internal);
+            }
+            patience = 10;
+        }
+        else {
+            patience--;
+            if (patience == 0) {
+                cout << "Run out of patience, no improvement for 10 moves" << endl;
                 return solution;
             }
-        // }
-        // else {
-        // }
+        }
     }
-    cout << "HUH???" << endl;
     return solution;
 }
