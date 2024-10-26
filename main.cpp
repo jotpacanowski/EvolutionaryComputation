@@ -13,39 +13,51 @@ using TSPSolverStarting = vector<int>(const vector<vector<int>>&, /*D*/
                                       int                         /*starting*/
 );
 
-void printResults(const vector<int>& sol, bool toFile = false,
-                  string_view filename = "solution.txt")
+ofstream openOutFile(string_view filename, string_view prefix = "")
 {
-    if (toFile) {
-        fs::path path = "data/results/";
-        path = path / filename;
-        std::ofstream out(path);
-        if (!out.is_open()) {
-            // perror("Error");
-            std::error_code ec(errno, std::generic_category());
-            cerr << "Error: " << ec.message() << " (code: " << ec.value() << ")\n";
+    fs::path path;
+    if (prefix.empty()) {
+        path = fs::path(filename);
+    }
+    else {
+        path = fs::path(prefix) / filename;
+    }
+    std::ofstream out(path);
+    if (!out.is_open()) {
+        // perror("Error");
+        std::error_code ec(errno, std::generic_category());
+        cerr << "Error: " << ec.message() << " (code: " << ec.value() << ")\n";
 
-            fs::path parent_dir = fs::path(path).parent_path();
-            if (!fs::exists(parent_dir)) {
-                cerr << "Creating missing directory: " << parent_dir << endl;
-                std::error_code ec;
-                fs::create_directories(parent_dir, ec);
-                // Check error without exceptions
-                if (ec.value() != 0) {
-                    cerr << "Failed: " << ec.message() << endl;
-                    exit(1);
-                }
-                // Try again
-                out.open(path);
-                if (!out.is_open()) {
-                    perror("second open");
-                    exit(1);
-                }
+        fs::path parent_dir = fs::path(path).parent_path();
+        if (!fs::exists(parent_dir)) {
+            cerr << "Creating missing directory: " << parent_dir << endl;
+            std::error_code ec;
+            fs::create_directories(parent_dir, ec);
+            // Check error without exceptions
+            if (ec.value() != 0) {
+                cerr << "Failed: " << ec.message() << endl;
+                exit(1);
             }
-            else {
+            // Try again
+            out.open(path);
+            if (!out.is_open()) {
+                perror("second open");
                 exit(1);
             }
         }
+        else {
+            exit(1);
+        }
+    }
+    return out;
+}
+
+void printResults(const vector<int>& sol, bool toFile = false,
+                  string_view filename = "solution.txt",
+                  string_view prefix = "data/results")
+{
+    if (toFile) {
+        ofstream out = openOutFile(filename, prefix);
         std::copy(sol.begin(), sol.end(), std::ostream_iterator<int>(out, "\n"));
     }
     else {
