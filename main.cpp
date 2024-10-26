@@ -209,26 +209,28 @@ void main_assignment_2(const TSPInstance& inst, string_view input_file_name)
 void eval_local_search(const TSPInstance& inst, string_view input_file_name,
                        const vector<int>& sol1)
 {
+    const initializer_list<pair<decltype(&steepestLocalSearch), const char*>> LS_TYPES{
+        {steepestLocalSearch, "steepest"},
+        {greedyLocalSearch, "greedy"},
+    };
+    const initializer_list<pair<bool, const char*>> INTRA_SWAP_TYPES{{false, "nodes"},
+                                                                     {true, "edges"}};
+
     Stopwatch timer;
     latextables.clear();
 
-    timer.reset();
-    auto steep_nodes = steepestLocalSearch(sol1, inst.distances, inst.costs, false);
-    cout << std::format("Took {}\n", timer.pretty_print());
-    timer.reset();
-    auto steep_edges = steepestLocalSearch(sol1, inst.distances, inst.costs, true);
-    cout << std::format("Took {}\n", timer.pretty_print());
-    timer.reset();
-    auto greed_nodes = greedyLocalSearch(sol1, inst.distances, inst.costs, false);
-    cout << std::format("Took {}\n", timer.pretty_print());
-    timer.reset();
-    auto greed_edges = greedyLocalSearch(sol1, inst.distances, inst.costs, true);
-    cout << std::format("Took {}\n", timer.pretty_print());
-
-    cout << "NODES: " << inst.evaluateSolution(steep_nodes) << endl;
-    cout << "EDGES: " << inst.evaluateSolution(steep_edges) << endl;
-    cout << "NODES GREEDY: " << inst.evaluateSolution(greed_nodes) << endl;
-    cout << "EDGES GREEDY: " << inst.evaluateSolution(greed_edges) << endl;
+    for (auto [func, funcname] : LS_TYPES) {
+        // check types using a compile error:
+        // func.XD;
+        for (auto [swaptype, movename] : INTRA_SWAP_TYPES) {
+            timer.reset();
+            auto solution = func(sol1, inst.distances, inst.costs, swaptype);
+            cout << std::format(
+                "\x1b[32m\t {} with {} type: {} \x1b[0m\n", funcname, movename,
+                format_with_spaces((long long)inst.evaluateSolution(solution)));
+            cout << std::format("Took {}\n", timer.pretty_print());
+        }
+    }
 }
 
 void main_local_search(const TSPInstance& inst, string_view input_file_name)
