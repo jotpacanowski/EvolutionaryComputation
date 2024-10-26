@@ -1,3 +1,4 @@
+#include <cstring>
 #include <initializer_list>
 #include <sstream>
 #include <vector>
@@ -245,40 +246,46 @@ void main_local_search(const TSPInstance& inst, string_view input_file_name)
                                                                      {true, "edges"}};
 
     Stopwatch timer;
+    Stopwatch timer_all;
     latextables.clear();
 
-    const auto initial_random = randomTSP(inst.distances, inst.costs, 123);
-    cout << "Old score (random): " << inst.evaluateSolution(initial_random) << endl;
-
+    // for each Greedy / Steepest
     for (auto [localsearchfunc, funcname] : LS_TYPES) {
         for (auto [swaptype, movename] : INTRA_SWAP_TYPES) {
-            timer.reset();
-            auto solution =
-                localsearchfunc(initial_random, inst.distances, inst.costs, swaptype);
-            cout << std::format(
-                "\x1b[32m\t {} with {} type:\x1b[0m {}\n", funcname, movename,
-                format_with_spaces((long long)inst.evaluateSolution(solution)));
-            cout << std::format("Took {}\n", timer.pretty_print());
+            for (int _is_random = 0; _is_random < 2; _is_random++) {
+                bool random = (_is_random == 0);
+                SolutionStats stats;
+                for (auto [initsolver, initname] : GREEDY_SOLVERS) {
+                    if (strncmp(initname, "random", 6) == 0) {
+                        if (!random) continue;
+                    }
+                    else if (random) {
+                        continue;
+                    }
+                    cout << std::format("Initial {}\n", initname);
+
+                    SolutionStats local_stats;
+
+                    timer.reset();
+                    for (int starting = 0; starting < 200; starting++) {
+                        const auto initial =
+                            initsolver(inst.distances, inst.costs, starting);
+
+                        auto solution = localsearchfunc(initial, inst.distances,
+                                                        inst.costs, swaptype);
+                        auto value = inst.evaluateSolution(solution);
+                        stats.track(solution, value);
+                    }
+                    cout << std::format("\x1b[32m\t  {:8} with {} type:\x1b[0m {}\n",
+                                        funcname, movename, stats.format_latex_3());
+                    cout << std::format("Took {}\n", timer.pretty_print());
+                }
+                // cout << "count = " << stats.average_denominator << endl;
+            }
         }
     }
 
-    const auto initial_gr = weightedSum2RegretTSP(inst.distances, inst.costs, 0, 0.5);
-    cout << "Old score (weighted 2-regret): " << inst.evaluateSolution(initial_random)
-         << endl;
-
-    for (auto [localsearchfunc, funcname] : LS_TYPES) {
-        for (auto [swaptype, movename] : INTRA_SWAP_TYPES) {
-            timer.reset();
-            auto solution =
-                localsearchfunc(initial_random, inst.distances, inst.costs, swaptype);
-            cout << std::format(
-                "\x1b[32m\t {} with {} type:\x1b[0m {}\n", funcname, movename,
-                format_with_spaces((long long)inst.evaluateSolution(solution)));
-            cout << std::format("Took {}\n", timer.pretty_print());
-        }
-    }
-
-    cout << std::format("Everything took {}\n", timer.pretty_print());
+    cout << std::format("Everything took {}\n", timer_all.pretty_print());
 
     // printResults(sol2_nodes, true, "local_test.txt");
 }
