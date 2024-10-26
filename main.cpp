@@ -52,6 +52,8 @@ void printResults(const vector<int>& sol, bool toFile = false,
     }
 }
 
+namespace run {
+
 static std::stringstream latextables;
 
 std::string format_with_spaces(long long number)
@@ -176,16 +178,35 @@ void weightedExperiments(const TSPInstance& inst)
     }
 }
 
-int main(int argc, char* argv[])
+void main_assignment_2(const TSPInstance& inst, string_view input_file_name)
 {
-    const char* input_file_name = "TSPA.csv";
-    if (argc >= 2) {
-        const auto arg = argv[1];
-        // if (fs::exists(arg)) {
-        input_file_name = arg;
-    }
-    const auto inst = TSPInstance::readFromFile(input_file_name);
+    const std::pair<TSPSolverStarting*, const char*> WHAT_TO_RUN[] = {
+        {randomTSP, "random"},
+        {nearestNeighborTSP, "NN-end"},
+        {nearestNeighborAnyTSP, "NN-any"},
+        {greedyCycleTSP, "greedyCycle"},
+        {regret2TSP, "regret"},
+        {[](const vector<vector<int>>& d, const vector<int>& costs, int starting_node) {
+             // hard-coded weight
+             return weightedSum2RegretTSP(d, costs, starting_node, 0.5);
+         },
+         "w-regret"},
+    };
 
+    latextables.clear();
+    for (auto it : WHAT_TO_RUN) {
+        auto [solver, name] = it;
+        cerr << std::format("\x1b[32m {} \x1b[0m", name) << endl;
+        // latextables << "  method " << name << endl;
+        evalWithStarting(inst, solver, name, input_file_name);
+    }
+    cerr << "Results for " << input_file_name << ":\n" << latextables.view() << endl;
+    weightedExperiments(inst);
+}
+
+void main_local_search(const TSPInstance& inst, string_view input_file_name)
+{
+    // randomTSP(inst.distances, inst.costs, 0);
     vector<int> sol1 = weightedSum2RegretTSP(inst.distances, inst.costs, 0, 0.5);
     // randomTSP(inst.distances, inst.costs, 0);
 
@@ -207,30 +228,22 @@ int main(int argc, char* argv[])
     cout << std::format("Everything took {}\n", tic.pretty_print());
 
     // printResults(sol2_nodes, true, "local_test.txt");
+}
 
-    // const std::pair<TSPSolverStarting*, const char*> WHAT_TO_RUN[] = {
-    //     {randomTSP, "random"},
-    //     {nearestNeighborTSP, "NN-end"},
-    //     {nearestNeighborAnyTSP, "NN-any"},
-    //     {greedyCycleTSP, "greedyCycle"},
-    //     {regret2TSP, "regret"},
-    //     {[](const vector<vector<int>>& d, const vector<int>& costs, int
-    //     starting_node)
-    //     {
-    //          // hard-coded weight
-    //          return weightedSum2RegretTSP(d, costs, starting_node, 0.5);
-    //      },
-    //      "w-regret"},
-    // };
+}  // namespace run
 
-    // latextables.clear();
-    // for (auto it : WHAT_TO_RUN) {
-    //     auto [solver, name] = it;
-    //     cerr << std::format("\x1b[32m {} \x1b[0m", name) << endl;
-    //     // latextables << "  method " << name << endl;
-    //     evalWithStarting(inst, solver, name, input_file_name);
-    // }
-    // cerr << "Results for " << input_file_name << ":\n" << latextables.view() <<
-    // endl; weightedExperiments(inst);
+int main(int argc, char* argv[])
+{
+    const char* input_file_name = "TSPA.csv";
+    if (argc >= 2) {
+        const auto arg = argv[1];
+        // if (fs::exists(arg)) {
+        input_file_name = arg;
+    }
+    const auto inst = TSPInstance::readFromFile(input_file_name);
+
+    // run::main_assignment_2(inst, input_file_name);
+
+    run::main_local_search(inst, input_file_name);
     return 0;
 }
