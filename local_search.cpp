@@ -16,6 +16,7 @@ constexpr int cycleNext(const vector<int> &solution, int index)
     return solution[index + 1];
 }
 
+// Intra-route move: swap two nodes within solution
 int intraSwapTwoNodesImpact(const vector<int> &solution, int id1, int id2,
                             const vector<vector<int>> &D, const int solution_size)
 {
@@ -29,19 +30,35 @@ int intraSwapTwoNodesImpact(const vector<int> &solution, int id1, int id2,
 
     if (next1 == node2) {
         int delta =
-            -D[prev1][node1] + D[prev1][node2] - D[node2][next2] + D[node1][next2];
+            // new
+            +D[prev1][node2]
+            + D[node1][next2]
+            // remove
+            - D[prev1][node1] - D[node2][next2];
         return delta;
     }
     if (next2 == node1) {
         int delta =
-            -D[node1][next1] + D[node2][next1] - D[prev2][node2] + D[prev2][node1];
+            // add
+            +D[prev2][node1]
+            + D[node2][next1]
+            // remove
+            - D[node1][next1] - D[prev2][node2];
         return delta;
     }
-    int delta = -D[prev1][node1] + D[prev1][node2] - D[node1][next1] + D[node2][next1]
-                - D[prev2][node2] + D[prev2][node1] - D[node2][next2] + D[node1][next2];
+    int delta =
+        // new edges
+        +D[prev1][node2] + D[node2][next1] + D[prev2][node1]
+        + D[node1][next2]
+        // without node1
+        - D[prev1][node1]
+        - D[node1][next1]
+        // without node2
+        - D[prev2][node2] - D[node2][next2];
     return delta;
 }
 
+// Intra-route move: swap two edges within solution
 int intraSwapTwoEdgesImpact(const vector<int> &solution, int id1, int id2,
                             const vector<vector<int>> &D, const int solution_size)
 {
@@ -64,6 +81,8 @@ int intraSwapTwoEdgesImpact(const vector<int> &solution, int id1, int id2,
     return delta;
 }
 
+// Inter-route move:
+// Exchange internal node with an external (i.e. outside the solution) node
 int interSwapTwoNodesImpact(const vector<int> &solution, int idx, int external_node,
                             const vector<vector<int>> &D, const vector<int> &costs,
                             const int solution_size)
@@ -73,8 +92,15 @@ int interSwapTwoNodesImpact(const vector<int> &solution, int idx, int external_n
     int prev = cyclePrev(solution, idx);
     int next = cycleNext(solution, idx);
 
-    int delta = -D[prev][internal_node] + D[prev][external_node] - D[internal_node][next]
-                + D[external_node][next] - costs[internal_node] + costs[external_node];
+    int delta =
+        // new edges
+        +D[prev][external_node]
+        + D[external_node][next]
+        // existing edges
+        - D[prev][internal_node]
+        - D[internal_node][next]
+        // cost
+        - costs[internal_node] + costs[external_node];
     return delta;
 }
 
