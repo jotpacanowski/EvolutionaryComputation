@@ -2,9 +2,9 @@
 
 #include "headers.hpp"
 
-vector<int> localSearch(vector<int> solution, const vector<vector<int>> &distanceMatrix,
+vector<int> steepestLocalSearch(vector<int> solution, const vector<vector<int>> &distanceMatrix,
                         const vector<int> &costs, bool edges = false);
 
-vector<int> localSearchGreedy(vector<int> solution,
+vector<int> greedyLocalSearch(vector<int> solution,
                               const vector<vector<int>> &distanceMatrix,
                               const vector<int> &costs, bool edges = false);

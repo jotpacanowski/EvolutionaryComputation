@@ -115,8 +115,9 @@ int findIndex(const vector<int> &arr, int item)
     return ret - arr.begin();
 }
 
-vector<int> localSearch(vector<int> solution, const vector<vector<int>> &distanceMatrix,
-                        const vector<int> &costs, bool edges = false)
+vector<int> steepestLocalSearch(vector<int> solution,
+                                const vector<vector<int>> &distanceMatrix,
+                                const vector<int> &costs, bool edges = false)
 {
     const auto solution_size = solution.size();
     assert(solution.size() == (distanceMatrix.size() + 1) / 2);
@@ -233,7 +234,7 @@ vector<int> localSearch(vector<int> solution, const vector<vector<int>> &distanc
     return solution;
 }
 
-vector<int> localSearchGreedy(vector<int> solution,
+vector<int> greedyLocalSearch(vector<int> solution,
                               const vector<vector<int>> &distanceMatrix,
                               const vector<int> &costs, bool edges = false)
 {

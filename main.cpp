@@ -192,11 +192,11 @@ int main(int argc, char* argv[])
     Stopwatch tic;
 
     cout << "OLD SCORE: " << inst.evaluateSolution(sol1) << endl;
-    vector<int> sol2_nodes = localSearch(sol1, inst.distances, inst.costs);
-    vector<int> sol2_edges = localSearch(sol1, inst.distances, inst.costs, true);
-    vector<int> sol2_nodes_greedy = localSearchGreedy(sol1, inst.distances, inst.costs);
+    vector<int> sol2_nodes = steepestLocalSearch(sol1, inst.distances, inst.costs);
+    vector<int> sol2_edges = steepestLocalSearch(sol1, inst.distances, inst.costs, true);
+    vector<int> sol2_nodes_greedy = greedyLocalSearch(sol1, inst.distances, inst.costs);
     vector<int> sol2_edges_greedy =
-        localSearchGreedy(sol1, inst.distances, inst.costs, true);
+        greedyLocalSearch(sol1, inst.distances, inst.costs, true);
     cout << "NEW SCORE NODES: " << inst.evaluateSolution(sol2_nodes) << endl;
     cout << "NEW SCORE NODES GREEDY: " << inst.evaluateSolution(sol2_nodes_greedy)
          << endl;
