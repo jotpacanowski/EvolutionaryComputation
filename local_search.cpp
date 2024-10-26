@@ -62,22 +62,17 @@ int intraSwapTwoNodesImpact(const vector<int> &solution, int id1, int id2,
 int intraSwapTwoEdgesImpact(const vector<int> &solution, int id1, int id2,
                             const vector<vector<int>> &D, const int solution_size)
 {
+    if (id1 > id2) {
+        tie(id1, id2) = tie(id2, id1);
+    }
     int node1 = solution[id1];
     int node2 = solution[id2];
-    int delta;
 
-    if (id1 < id2) {
-        int prev1 = cyclePrev(solution, id1);
-        int next2 = cycleNext(solution, id2);
+    // assuming symmetric D
+    int prev1 = cyclePrev(solution, id1);
+    int next2 = cycleNext(solution, id2);
 
-        delta = -D[prev1][node1] + D[prev1][node2] - D[node2][next2] + D[node1][next2];
-    }
-    else {  // id1 >= id2
-        int next1 = cycleNext(solution, id1);
-        int prev2 = cyclePrev(solution, id2);
-
-        delta = -D[prev2][node2] + D[prev2][node1] - D[node1][next1] + D[node2][next1];
-    }
+    int delta = -D[prev1][node1] + D[prev1][node2] - D[node2][next2] + D[node1][next2];
     return delta;
 }
 
@@ -118,7 +113,6 @@ vector<int> localSearch(vector<int> solution, const vector<vector<int>> &distanc
     int variable = 0;
     int delta;
     int highest_delta = 0;
-    int pos1, pos2;
     bool found = false;
     int best_external, best_internal;
     vector<int> in_sol;
@@ -139,18 +133,23 @@ vector<int> localSearch(vector<int> solution, const vector<vector<int>> &distanc
 
     std::shuffle(not_in_sol.begin(), not_in_sol.end(), g);
     std::shuffle(in_sol.begin(), in_sol.end(), g);
-    cout << "SIZE: " << solution_size << endl;
 
+    int pos1 = -5;
+    int pos2 = -5;
     for (int _ = 0; _ < 1000000; _++) {  // some arbitrary limit
-        variable = rand() % 2;
+        int variable = rand() % 2;
         if (variable == 0) {  // Do intra moves
             for (int i1 = 0; i1 < solution_size; i1++) {
                 for (int i2 = 0; i2 < i1; i2++) {
-                    if (edges) {  // Swap two edges variation
+                    // for (int i2 = i1 + 1; i2 < solution_size; i2++) {
+                    int delta;
+                    if (edges) {
+                        if (i2 - i1 < 2) continue;                    // skip (0, 1)
+                        if ((solution_size + i1) - i2 < 2) continue;  // skip (0,99)
                         delta = intraSwapTwoEdgesImpact(solution, i1, i2, distanceMatrix,
                                                         solution_size);
                     }
-                    else {  // Swap two nodes variation
+                    else {
                         delta = intraSwapTwoNodesImpact(solution, i1, i2, distanceMatrix,
                                                         solution_size);
                     }
@@ -259,8 +258,6 @@ vector<int> localSearchGreedy(vector<int> solution,
     std::shuffle(id1_random.begin(), id1_random.end(), g);
     std::shuffle(id2_random.begin(), id2_random.end(), g);
 
-    cout << "SIZE: " << solution_size << endl;
-
     for (int _ = 0; _ < 1000000; _++) {  // some arbitrary limit
         variable = rand() % 2;
         if (variable == 0) {  // Do intra moves
@@ -268,11 +265,13 @@ vector<int> localSearchGreedy(vector<int> solution,
                 if (found) break;
                 for (int i2 : id2_random) {
                     if (i1 == i2) continue;
-                    if (edges) {  // Swap two edges variation
+                    if (edges) {
+                        if (i2 - i1 < 2) continue;                    // skip (0, 1)
+                        if ((solution_size + i1) - i2 < 2) continue;  // skip (0,99)
                         delta = intraSwapTwoEdgesImpact(solution, i1, i2, distanceMatrix,
                                                         solution_size);
                     }
-                    else {  // Swap two nodes variation
+                    else {
                         delta = intraSwapTwoNodesImpact(solution, i1, i2, distanceMatrix,
                                                         solution_size);
                     }
