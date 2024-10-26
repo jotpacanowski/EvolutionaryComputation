@@ -209,35 +209,33 @@ void weightedExperiments(const TSPInstance& inst)
     }
 }
 
+// note: std::array<> does not deduce its length here
+const initializer_list<pair<TSPSolverStarting*, const char*>> GREEDY_SOLVERS{
+    {randomTSP, "random"},
+    {nearestNeighborTSP, "NN-end"},
+    {nearestNeighborAnyTSP, "NN-any"},
+    {greedyCycleTSP, "greedyCycle"},
+    {regret2TSP, "regret"},
+    {[](const vector<vector<int>>& d, const vector<int>& costs, int starting_node) {
+         // hard-coded weight
+         return weightedSum2RegretTSP(d, costs, starting_node, 0.5);
+     },
+     "w-regret"},
+};
+
 void main_assignment_2(const TSPInstance& inst, string_view input_file_name)
 {
-    // note: std::array<> does not deduce its length here
-    const initializer_list<pair<TSPSolverStarting*, const char*>> WHAT_TO_RUN{
-        {randomTSP, "random"},
-        {nearestNeighborTSP, "NN-end"},
-        {nearestNeighborAnyTSP, "NN-any"},
-        {greedyCycleTSP, "greedyCycle"},
-        {regret2TSP, "regret"},
-        {[](const vector<vector<int>>& d, const vector<int>& costs, int starting_node) {
-             // hard-coded weight
-             return weightedSum2RegretTSP(d, costs, starting_node, 0.5);
-         },
-         "w-regret"},
-    };
-
     latextables.clear();
-    for (auto it : WHAT_TO_RUN) {
+    for (auto it : GREEDY_SOLVERS) {
         auto [solver, name] = it;
         cerr << std::format("\x1b[32m {} \x1b[0m", name) << endl;
         // latextables << "  method " << name << endl;
         evalWithStarting(inst, solver, name, input_file_name);
     }
     cerr << "Results for " << input_file_name << ":\n" << latextables.view() << endl;
-    weightedExperiments(inst);
 }
 
-void eval_local_search(const TSPInstance& inst, string_view input_file_name,
-                       const vector<int>& sol1)
+void main_local_search(const TSPInstance& inst, string_view input_file_name)
 {
     const initializer_list<pair<decltype(&steepestLocalSearch), const char*>> LS_TYPES{
         {steepestLocalSearch, "steepest"},
@@ -249,33 +247,38 @@ void eval_local_search(const TSPInstance& inst, string_view input_file_name,
     Stopwatch timer;
     latextables.clear();
 
-    for (auto [func, funcname] : LS_TYPES) {
-        // check types using a compile error:
-        // func.XD;
+    const auto initial_random = randomTSP(inst.distances, inst.costs, 123);
+    cout << "Old score (random): " << inst.evaluateSolution(initial_random) << endl;
+
+    for (auto [localsearchfunc, funcname] : LS_TYPES) {
         for (auto [swaptype, movename] : INTRA_SWAP_TYPES) {
             timer.reset();
-            auto solution = func(sol1, inst.distances, inst.costs, swaptype);
+            auto solution =
+                localsearchfunc(initial_random, inst.distances, inst.costs, swaptype);
             cout << std::format(
-                "\x1b[32m\t {} with {} type: {} \x1b[0m\n", funcname, movename,
+                "\x1b[32m\t {} with {} type:\x1b[0m {}\n", funcname, movename,
                 format_with_spaces((long long)inst.evaluateSolution(solution)));
             cout << std::format("Took {}\n", timer.pretty_print());
         }
     }
-}
-
-void main_local_search(const TSPInstance& inst, string_view input_file_name)
-{
-    Stopwatch tic;
-
-    const auto initial_random = randomTSP(inst.distances, inst.costs, 123);
 
     const auto initial_gr = weightedSum2RegretTSP(inst.distances, inst.costs, 0, 0.5);
-
-    cout << "Old score (weighted 2-regret): " << inst.evaluateSolution(initial_gr)
+    cout << "Old score (weighted 2-regret): " << inst.evaluateSolution(initial_random)
          << endl;
-    eval_local_search(inst, input_file_name, initial_gr);
 
-    cout << std::format("Everything took {}\n", tic.pretty_print());
+    for (auto [localsearchfunc, funcname] : LS_TYPES) {
+        for (auto [swaptype, movename] : INTRA_SWAP_TYPES) {
+            timer.reset();
+            auto solution =
+                localsearchfunc(initial_random, inst.distances, inst.costs, swaptype);
+            cout << std::format(
+                "\x1b[32m\t {} with {} type:\x1b[0m {}\n", funcname, movename,
+                format_with_spaces((long long)inst.evaluateSolution(solution)));
+            cout << std::format("Took {}\n", timer.pretty_print());
+        }
+    }
+
+    cout << std::format("Everything took {}\n", timer.pretty_print());
 
     // printResults(sol2_nodes, true, "local_test.txt");
 }
@@ -293,6 +296,7 @@ int main(int argc, char* argv[])
     const auto inst = TSPInstance::readFromFile(input_file_name);
 
     // run::main_assignment_2(inst, input_file_name);
+    // run::weightedExperiments(inst);
 
     run::main_local_search(inst, input_file_name);
     return 0;
