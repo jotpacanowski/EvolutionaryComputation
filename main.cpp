@@ -189,6 +189,8 @@ int main(int argc, char* argv[])
     vector<int> sol1 = weightedSum2RegretTSP(inst.distances, inst.costs, 0, 0.5);
     // randomTSP(inst.distances, inst.costs, 0);
 
+    Stopwatch tic;
+
     cout << "OLD SCORE: " << inst.evaluateSolution(sol1) << endl;
     vector<int> sol2_nodes = localSearch(sol1, inst.distances, inst.costs, sol1.size());
     vector<int> sol2_edges =
@@ -198,11 +200,16 @@ int main(int argc, char* argv[])
     vector<int> sol2_edges_greedy =
         localSearchGreedy(sol1, inst.distances, inst.costs, sol1.size(), true);
     cout << "NEW SCORE NODES: " << inst.evaluateSolution(sol2_nodes) << endl;
-    cout << "NEW SCORE NODES GREEDY: " << inst.evaluateSolution(sol2_nodes_greedy) << endl;
+    cout << "NEW SCORE NODES GREEDY: " << inst.evaluateSolution(sol2_nodes_greedy)
+         << endl;
     cout << "NEW SCORE EDGES: " << inst.evaluateSolution(sol2_edges) << endl;
-    cout << "NEW SCORE EDGES GREEDY: " << inst.evaluateSolution(sol2_edges_greedy) << endl;
+    cout << "NEW SCORE EDGES GREEDY: " << inst.evaluateSolution(sol2_edges_greedy)
+         << endl;
 
-    printResults(sol2_nodes, true, "local_test.txt");
+    cout << std::format("Everything took {}\n", tic.pretty_print());
+
+    // printResults(sol2_nodes, true, "local_test.txt");
+
     // const std::pair<TSPSolverStarting*, const char*> WHAT_TO_RUN[] = {
     //     {randomTSP, "random"},
     //     {nearestNeighborTSP, "NN-end"},
