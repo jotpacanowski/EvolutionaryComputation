@@ -12,7 +12,6 @@
 #define assert(fact)
 #endif
 
-
 constexpr int cyclePrev(const vector<int> &solution, int index)
 {
     if (index == 0) return solution[solution.size() - 1];
@@ -216,7 +215,10 @@ vector<int> steepestLocalSearch(vector<int> solution,
             highest_delta = 0;
         }
     }
+
+#if 0
     cerr << "Did " << _iters << " iterations.\n";
+#endif
     return solution;
 }
 
@@ -339,9 +341,11 @@ vector<int> greedyLocalSearch(vector<int> solution,
         else {
             patience--;
             if (patience == 0) {
+#if 0
                 cout << "Run out of patience, no improvement for 10 moves. Got to "
                         "iterations: "
                      << _ << endl;
+#endif
                 return solution;
             }
         }
