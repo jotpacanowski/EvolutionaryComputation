@@ -116,10 +116,9 @@ int findIndex(const vector<int> &arr, int item)
 }
 
 vector<int> localSearch(vector<int> solution, const vector<vector<int>> &distanceMatrix,
-                        const vector<int> &costs, const int solution_size,
-                        bool edges = false)
+                        const vector<int> &costs, bool edges = false)
 {
-    assert(solution.size() == solution_size);
+    const auto solution_size = solution.size();
     assert(solution.size() == (distanceMatrix.size() + 1) / 2);
     int highest_delta = 0;
     bool found = false;
@@ -236,10 +235,9 @@ vector<int> localSearch(vector<int> solution, const vector<vector<int>> &distanc
 
 vector<int> localSearchGreedy(vector<int> solution,
                               const vector<vector<int>> &distanceMatrix,
-                              const vector<int> &costs, const int solution_size,
-                              bool edges = false)
+                              const vector<int> &costs, bool edges = false)
 {
-    assert(solution.size() == solution_size);
+    const auto solution_size = solution.size();
     assert(solution.size() == (distanceMatrix.size() + 1) / 2);
     int variable = 0;
     int pos1, pos2;
