@@ -1,3 +1,4 @@
+#include <initializer_list>
 #include <sstream>
 #include <vector>
 
@@ -180,7 +181,8 @@ void weightedExperiments(const TSPInstance& inst)
 
 void main_assignment_2(const TSPInstance& inst, string_view input_file_name)
 {
-    const std::pair<TSPSolverStarting*, const char*> WHAT_TO_RUN[] = {
+    // note: std::array<> does not deduce its length here
+    const initializer_list<pair<TSPSolverStarting*, const char*>> WHAT_TO_RUN{
         {randomTSP, "random"},
         {nearestNeighborTSP, "NN-end"},
         {nearestNeighborAnyTSP, "NN-any"},
@@ -204,26 +206,42 @@ void main_assignment_2(const TSPInstance& inst, string_view input_file_name)
     weightedExperiments(inst);
 }
 
+void eval_local_search(const TSPInstance& inst, string_view input_file_name,
+                       const vector<int>& sol1)
+{
+    Stopwatch timer;
+    latextables.clear();
+
+    timer.reset();
+    auto steep_nodes = steepestLocalSearch(sol1, inst.distances, inst.costs, false);
+    cout << std::format("Took {}\n", timer.pretty_print());
+    timer.reset();
+    auto steep_edges = steepestLocalSearch(sol1, inst.distances, inst.costs, true);
+    cout << std::format("Took {}\n", timer.pretty_print());
+    timer.reset();
+    auto greed_nodes = greedyLocalSearch(sol1, inst.distances, inst.costs, false);
+    cout << std::format("Took {}\n", timer.pretty_print());
+    timer.reset();
+    auto greed_edges = greedyLocalSearch(sol1, inst.distances, inst.costs, true);
+    cout << std::format("Took {}\n", timer.pretty_print());
+
+    cout << "NODES: " << inst.evaluateSolution(steep_nodes) << endl;
+    cout << "EDGES: " << inst.evaluateSolution(steep_edges) << endl;
+    cout << "NODES GREEDY: " << inst.evaluateSolution(greed_nodes) << endl;
+    cout << "EDGES GREEDY: " << inst.evaluateSolution(greed_edges) << endl;
+}
+
 void main_local_search(const TSPInstance& inst, string_view input_file_name)
 {
-    // randomTSP(inst.distances, inst.costs, 0);
-    vector<int> sol1 = weightedSum2RegretTSP(inst.distances, inst.costs, 0, 0.5);
-    // randomTSP(inst.distances, inst.costs, 0);
-
     Stopwatch tic;
 
-    cout << "OLD SCORE: " << inst.evaluateSolution(sol1) << endl;
-    vector<int> sol2_nodes = steepestLocalSearch(sol1, inst.distances, inst.costs);
-    vector<int> sol2_edges = steepestLocalSearch(sol1, inst.distances, inst.costs, true);
-    vector<int> sol2_nodes_greedy = greedyLocalSearch(sol1, inst.distances, inst.costs);
-    vector<int> sol2_edges_greedy =
-        greedyLocalSearch(sol1, inst.distances, inst.costs, true);
-    cout << "NEW SCORE NODES: " << inst.evaluateSolution(sol2_nodes) << endl;
-    cout << "NEW SCORE NODES GREEDY: " << inst.evaluateSolution(sol2_nodes_greedy)
+    const auto initial_random = randomTSP(inst.distances, inst.costs, 123);
+
+    const auto initial_gr = weightedSum2RegretTSP(inst.distances, inst.costs, 0, 0.5);
+
+    cout << "Old score (weighted 2-regret): " << inst.evaluateSolution(initial_gr)
          << endl;
-    cout << "NEW SCORE EDGES: " << inst.evaluateSolution(sol2_edges) << endl;
-    cout << "NEW SCORE EDGES GREEDY: " << inst.evaluateSolution(sol2_edges_greedy)
-         << endl;
+    eval_local_search(inst, input_file_name, initial_gr);
 
     cout << std::format("Everything took {}\n", tic.pretty_print());
 

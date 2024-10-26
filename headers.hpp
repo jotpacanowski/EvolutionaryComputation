@@ -32,7 +32,8 @@ class Stopwatch {
     chrono::high_resolution_clock::time_point start_tp;
 
    public:
-    Stopwatch() { this->start_tp = chrono::high_resolution_clock::now(); }
+    Stopwatch() { this->reset(); }
+    void reset() { this->start_tp = chrono::high_resolution_clock::now(); }
 
     [[nodiscard]] long long count_nanos() const
     {
