@@ -4,6 +4,15 @@
 
 #include "headers.hpp"
 
+// TODO: g++ -DDEBUG=1 in terminal
+#define DEBUG
+#ifdef DEBUG
+#include <cassert>
+#else
+#define assert(fact)
+#endif
+
+
 constexpr int cyclePrev(const vector<int> &solution, int index)
 {
     if (index == 0) return solution[solution.size() - 1];
@@ -17,8 +26,8 @@ constexpr int cycleNext(const vector<int> &solution, int index)
 }
 
 // Intra-route move: swap two nodes within solution
-int intraSwapTwoNodesImpact(const vector<int> &solution, int id1, int id2,
-                            const vector<vector<int>> &D, const int solution_size)
+int intraSwapTwoNodesImpact(const vector<int> &solution, const vector<vector<int>> &D,
+                            int id1, int id2)
 {
     int node1 = solution[id1];
     int node2 = solution[id2];
@@ -59,12 +68,13 @@ int intraSwapTwoNodesImpact(const vector<int> &solution, int id1, int id2,
 }
 
 // Intra-route move: swap two edges within solution
-int intraSwapTwoEdgesImpact(const vector<int> &solution, int id1, int id2,
-                            const vector<vector<int>> &D, const int solution_size)
+int intraSwapTwoEdgesImpact(const vector<int> &solution, const vector<vector<int>> &D,
+                            int id1, int id2)
 {
     if (id1 > id2) {
         tie(id1, id2) = tie(id2, id1);
     }
+    assert(id1 < id2);
     int node1 = solution[id1];
     int node2 = solution[id2];
 
@@ -78,9 +88,8 @@ int intraSwapTwoEdgesImpact(const vector<int> &solution, int id1, int id2,
 
 // Inter-route move:
 // Exchange internal node with an external (i.e. outside the solution) node
-int interSwapTwoNodesImpact(const vector<int> &solution, int idx, int external_node,
-                            const vector<vector<int>> &D, const vector<int> &costs,
-                            const int solution_size)
+int interSwapTwoNodesImpact(const vector<int> &solution, const vector<vector<int>> &D,
+                            const vector<int> &costs, int idx, int external_node)
 {
     int internal_node = solution[idx];
 
@@ -110,8 +119,8 @@ vector<int> localSearch(vector<int> solution, const vector<vector<int>> &distanc
                         const vector<int> &costs, const int solution_size,
                         bool edges = false)
 {
-    int variable = 0;
-    int delta;
+    assert(solution.size() == solution_size);
+    assert(solution.size() == (distanceMatrix.size() + 1) / 2);
     int highest_delta = 0;
     bool found = false;
     int best_external, best_internal;
@@ -146,12 +155,10 @@ vector<int> localSearch(vector<int> solution, const vector<vector<int>> &distanc
                     if (edges) {
                         if (i2 - i1 < 2) continue;                    // skip (0, 1)
                         if ((solution_size + i1) - i2 < 2) continue;  // skip (0,99)
-                        delta = intraSwapTwoEdgesImpact(solution, i1, i2, distanceMatrix,
-                                                        solution_size);
+                        delta = intraSwapTwoEdgesImpact(solution, distanceMatrix, i1, i2);
                     }
                     else {
-                        delta = intraSwapTwoNodesImpact(solution, i1, i2, distanceMatrix,
-                                                        solution_size);
+                        delta = intraSwapTwoNodesImpact(solution, distanceMatrix, i1, i2);
                     }
 
                     delta = -delta;               // WE WANT IMPROVEMENT -> smaller score
@@ -168,8 +175,8 @@ vector<int> localSearch(vector<int> solution, const vector<vector<int>> &distanc
             for (int internal : in_sol) {
                 int idx = findIndex(solution, internal);
                 for (int external : not_in_sol) {
-                    delta = interSwapTwoNodesImpact(solution, idx, external,
-                                                    distanceMatrix, costs, solution_size);
+                    int delta = interSwapTwoNodesImpact(solution, distanceMatrix, costs,
+                                                        idx, external);
                     delta = -delta;               // WE WANT IMPROVEMENT -> smaller score
                     if (delta > highest_delta) {  // Steepest variation
                         highest_delta = delta;
@@ -185,25 +192,34 @@ vector<int> localSearch(vector<int> solution, const vector<vector<int>> &distanc
             std::shuffle(in_sol.begin(), in_sol.end(), g);
         }
         if (found) {
-            found = false;
-            highest_delta = 0;
-
             if (variable == 0) {
                 if (edges) {
-                    reverse(solution.begin() + pos1, solution.begin() + pos2);
+                    assert(pos1 != pos2);
+                    if (pos1 < pos2) {
+                        // past-the-end iterator: adding +1
+                        reverse(solution.begin() + pos1, solution.begin() + pos2 + 1);
+                    }
+                    else if (pos2 < pos1) {
+                        reverse(solution.begin() + pos2, solution.begin() + pos1 + 1);
+                    }
                 }
                 else {
+                    assert(pos1 != pos2);
                     iter_swap(solution.begin() + pos1, solution.begin() + pos2);
                 }
             }
             else {
+                assert(best_internal != best_external);
                 solution[pos1] = best_external;
                 std::erase(in_sol, best_internal);
                 in_sol.push_back(best_external);
                 std::erase(not_in_sol, best_external);
                 not_in_sol.push_back(best_internal);
             }
+            // Reset
+            found = false;
             patience = 10;
+            highest_delta = 0;
         }
         else {
             patience--;
@@ -223,6 +239,7 @@ vector<int> localSearchGreedy(vector<int> solution,
                               const vector<int> &costs, const int solution_size,
                               bool edges = false)
 {
+    assert(solution.size() == solution_size);
     int variable = 0;
     int delta;
     int pos1, pos2;
@@ -268,12 +285,10 @@ vector<int> localSearchGreedy(vector<int> solution,
                     if (edges) {
                         if (i2 - i1 < 2) continue;                    // skip (0, 1)
                         if ((solution_size + i1) - i2 < 2) continue;  // skip (0,99)
-                        delta = intraSwapTwoEdgesImpact(solution, i1, i2, distanceMatrix,
-                                                        solution_size);
+                        delta = intraSwapTwoEdgesImpact(solution, distanceMatrix, i1, i2);
                     }
                     else {
-                        delta = intraSwapTwoNodesImpact(solution, i1, i2, distanceMatrix,
-                                                        solution_size);
+                        delta = intraSwapTwoNodesImpact(solution, distanceMatrix, i1, i2);
                     }
 
                     delta = -delta;   // WE WANT IMPROVEMENT -> smaller score
@@ -292,8 +307,8 @@ vector<int> localSearchGreedy(vector<int> solution,
                 if (found) break;
                 int idx = findIndex(solution, internal);
                 for (int external : not_in_sol) {
-                    delta = interSwapTwoNodesImpact(solution, idx, external,
-                                                    distanceMatrix, costs, solution_size);
+                    delta = interSwapTwoNodesImpact(solution, distanceMatrix, costs, idx,
+                                                    external);
                     delta = -delta;   // WE WANT IMPROVEMENT -> smaller score
                     if (delta > 0) {  // Steepest variation
                         // cout << "GREEDY IMRPOVEMENT " << delta << endl;
