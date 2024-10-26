@@ -119,16 +119,14 @@ vector<int> steepestLocalSearch(vector<int> solution,
                                 const vector<vector<int>> &distanceMatrix,
                                 const vector<int> &costs, bool edges = false)
 {
+    const auto N = distanceMatrix.size();
     const auto solution_size = solution.size();
-    assert(solution.size() == (distanceMatrix.size() + 1) / 2);
-    int highest_delta = 0;
-    bool found = false;
-    int best_external, best_internal;
+    assert(solution.size() == (N + 1) / 2);
     vector<int> in_sol;
     vector<int> not_in_sol;
-    not_in_sol.reserve(distanceMatrix.size() - solution_size);
     in_sol.reserve(solution_size);
-    for (int i = 0; i < distanceMatrix.size(); i++) {
+    not_in_sol.reserve(N - solution_size);
+    for (int i = 0; i < N; i++) {
         if (std::find(solution.begin(), solution.end(), i) != solution.end()) {
             in_sol.push_back(i);
         }
@@ -136,7 +134,6 @@ vector<int> steepestLocalSearch(vector<int> solution,
             not_in_sol.push_back(i);
         }
     }
-    int patience = 10;
     std::random_device rd;
     std::mt19937 g(rd());
 
@@ -145,12 +142,16 @@ vector<int> steepestLocalSearch(vector<int> solution,
 
     int pos1 = -5;
     int pos2 = -5;
-    for (int _ = 0; _ < 1000000; _++) {  // some arbitrary limit
-        int variable = rand() % 2;
-        if (variable == 0) {  // Do intra moves
+    int highest_delta = 0;
+    int best_external, best_internal;
+    bool found = true;
+    int _iters = 0;
+    for (; found; _iters++) {
+        found = false;
+        bool intra_moves = true;
+        {  // Do intra moves
             for (int i1 = 0; i1 < solution_size; i1++) {
                 for (int i2 = 0; i2 < i1; i2++) {
-                    // for (int i2 = i1 + 1; i2 < solution_size; i2++) {
                     int delta;
                     if (edges) {
                         if (i2 - i1 < 2) continue;                    // skip (0, 1)
@@ -161,8 +162,8 @@ vector<int> steepestLocalSearch(vector<int> solution,
                         delta = intraSwapTwoNodesImpact(solution, distanceMatrix, i1, i2);
                     }
 
-                    delta = -delta;               // WE WANT IMPROVEMENT -> smaller score
-                    if (delta > highest_delta) {  // Steepest variation
+                    delta = -delta;
+                    if (delta > highest_delta) {
                         highest_delta = delta;
                         pos1 = i1;
                         pos2 = i2;
@@ -171,19 +172,21 @@ vector<int> steepestLocalSearch(vector<int> solution,
                 }
             }
         }
-        else {  // Do inter moves
+        {  // Do inter moves
             for (int internal : in_sol) {
                 int idx = findIndex(solution, internal);
                 for (int external : not_in_sol) {
                     int delta = interSwapTwoNodesImpact(solution, distanceMatrix, costs,
                                                         idx, external);
-                    delta = -delta;               // WE WANT IMPROVEMENT -> smaller score
-                    if (delta > highest_delta) {  // Steepest variation
+                    delta = -delta;
+                    if (delta > highest_delta) {
                         highest_delta = delta;
                         best_external = external;
                         best_internal = internal;
                         pos1 = idx;
                         found = true;
+                        // also:
+                        intra_moves = false;
                     }
                 }
             }
@@ -192,7 +195,7 @@ vector<int> steepestLocalSearch(vector<int> solution,
             std::shuffle(in_sol.begin(), in_sol.end(), g);
         }
         if (found) {
-            if (variable == 0) {
+            if (intra_moves == true) {
                 if (edges) {
                     assert(pos1 != pos2);
                     if (pos1 < pos2) {
@@ -217,20 +220,11 @@ vector<int> steepestLocalSearch(vector<int> solution,
                 not_in_sol.push_back(best_internal);
             }
             // Reset
-            found = false;
-            patience = 10;
+            // found = false;
             highest_delta = 0;
         }
-        else {
-            patience--;
-            if (patience == 0) {
-                cout << "Run out of patience, no improvement for 10 moves. Got to "
-                        "iterations: "
-                     << _ << endl;
-                return solution;
-            }
-        }
     }
+    cerr << "Did " << _iters << " iterations.\n";
     return solution;
 }
 
