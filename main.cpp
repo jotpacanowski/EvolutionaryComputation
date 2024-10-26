@@ -87,11 +87,7 @@ std::string format_with_spaces(double number)
     return std::format("{}.{:03}", int_part, std::abs(fractional));
 }
 
-void evalWithStarting(const TSPInstance& instance, TSPSolverStarting solver,
-                      string_view solver_name, string_view instance_name)
-{
-    // vector<int> sol;
-
+struct SolutionStats {
     vector<int> best_sol;
     int best_sol_value = LARGE_SCORE;
 
@@ -101,12 +97,13 @@ void evalWithStarting(const TSPInstance& instance, TSPSolverStarting solver,
     long long average_numerator = 0;
     long long average_denominator = 0;
 
-    Stopwatch tic;
+    [[nodiscard]] double average() const
+    {
+        return (double)(average_numerator) / average_denominator;
+    }
 
-    // Generating 200 random solutions, keeping the best and the worst ones.
-    for (int i = 0; i < 200; i++) {
-        auto sol = solver(instance.distances, instance.costs, i);
-        int value = instance.evaluateSolution(sol);
+    void track(const vector<int>& sol, int value)
+    {
         if (value < best_sol_value) {
             best_sol_value = value;
             best_sol = sol;
@@ -118,6 +115,20 @@ void evalWithStarting(const TSPInstance& instance, TSPSolverStarting solver,
         average_numerator += value;
         average_denominator += 1;
     }
+};
+
+void evalWithStarting(const TSPInstance& instance, TSPSolverStarting solver,
+                      string_view solver_name, string_view instance_name)
+{
+    SolutionStats stats;
+    Stopwatch tic;
+
+    for (int i = 0; i < 200; i++) {
+        // starting node index i
+        auto sol = solver(instance.distances, instance.costs, i);
+        int value = instance.evaluateSolution(sol);
+        stats.track(sol, value);
+    }
 
     cout << std::format("Took {}\n", tic.pretty_print());
 
@@ -128,19 +139,18 @@ void evalWithStarting(const TSPInstance& instance, TSPSolverStarting solver,
         // "{:6} & {:>7} & {:>11.3f} & {:>7} \\\\\n",
         "{:12} & {:>7} & {:>12} & {:>7} \\\\\n", solver_name,
         // format values
-        format_with_spaces((long long)best_sol_value),
-        format_with_spaces((double)(average_numerator) / average_denominator),
-        format_with_spaces((long long)worst_sol_value));
+        format_with_spaces((long long)stats.best_sol_value),
+        format_with_spaces(stats.average()),
+        format_with_spaces((long long)stats.worst_sol_value));
 
     cout << std::format(
         "   best: {:>7}\n"
         "average: {:>11.3f}\n"
         "  worst: {:>7}\n",
-        best_sol_value, (double)(average_numerator) / average_denominator,
-        worst_sol_value);
-    printResults(best_sol, true,
+        stats.best_sol_value, stats.average(), stats.worst_sol_value);
+    printResults(stats.best_sol, true,
                  std::format("{}_{}_best.txt", instance_name, solver_name));
-    printResults(worst_sol, true,
+    printResults(stats.worst_sol, true,
                  std::format("{}_{}_worst.txt", instance_name, solver_name));
 }
 
