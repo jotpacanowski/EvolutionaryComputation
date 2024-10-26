@@ -4,29 +4,41 @@
 
 #include "headers.hpp"
 
+constexpr int cyclePrev(const vector<int> &solution, int index)
+{
+    if (index == 0) return solution[solution.size() - 1];
+    return solution[index - 1];
+}
+
+constexpr int cycleNext(const vector<int> &solution, int index)
+{
+    if (index == solution.size() - 1) return solution[0];
+    return solution[index + 1];
+}
+
 int intraSwapTwoNodesImpact(const vector<int> &solution, int id1, int id2,
                             const vector<vector<int>> &D, const int solution_size)
 {
     int node1 = solution[id1];
     int node2 = solution[id2];
 
-    int delta;
+    int prev1 = cyclePrev(solution, id1);
+    int next1 = cycleNext(solution, id1);
+    int prev2 = cyclePrev(solution, id2);
+    int next2 = cycleNext(solution, id2);
 
-    int prev1 = id1 == 0 ? solution[(solution_size - 1)] : solution[id1 - 1];
-    int next1 = id1 == (solution_size - 1) ? solution[0] : solution[id1 + 1];
-    int prev2 = id2 == 0 ? solution[(solution_size - 1)] : solution[id2 - 1];
-    int next2 = id2 == (solution_size - 1) ? solution[0] : solution[id2 + 1];
-
-    if (next1 == node2) {  // id1+1=id2
-        delta = -D[prev1][node1] + D[prev1][node2] - D[node2][next2] + D[node1][next2];
+    if (next1 == node2) {
+        int delta =
+            -D[prev1][node1] + D[prev1][node2] - D[node2][next2] + D[node1][next2];
         return delta;
     }
     if (next2 == node1) {
-        delta = -D[node1][next1] + D[node2][next1] - D[prev2][node2] + D[prev2][node1];
+        int delta =
+            -D[node1][next1] + D[node2][next1] - D[prev2][node2] + D[prev2][node1];
         return delta;
     }
-    delta = -D[prev1][node1] + D[prev1][node2] - D[node1][next1] + D[node2][next1]
-            - D[prev2][node2] + D[prev2][node1] - D[node2][next2] + D[node1][next2];
+    int delta = -D[prev1][node1] + D[prev1][node2] - D[node1][next1] + D[node2][next1]
+                - D[prev2][node2] + D[prev2][node1] - D[node2][next2] + D[node1][next2];
     return delta;
 }
 
@@ -35,17 +47,17 @@ int intraSwapTwoEdgesImpact(const vector<int> &solution, int id1, int id2,
 {
     int node1 = solution[id1];
     int node2 = solution[id2];
-    int delta, prev1, prev2, next1, next2;
+    int delta;
 
-    if (id1 < id2) {  //
-        prev1 = id1 == 0 ? solution[(solution_size - 1)] : solution[id1 - 1];
-        next2 = id2 == (solution_size - 1) ? solution[0] : solution[id2 + 1];
+    if (id1 < id2) {
+        int prev1 = cyclePrev(solution, id1);
+        int next2 = cycleNext(solution, id2);
 
         delta = -D[prev1][node1] + D[prev1][node2] - D[node2][next2] + D[node1][next2];
     }
-    else {  //(id1 > id2)
-        next1 = id1 == (solution_size - 1) ? solution[0] : solution[id1 + 1];
-        prev2 = id2 == 0 ? solution[(solution_size - 1)] : solution[id2 - 1];
+    else {  // id1 >= id2
+        int next1 = cycleNext(solution, id1);
+        int prev2 = cyclePrev(solution, id2);
 
         delta = -D[prev2][node2] + D[prev2][node1] - D[node1][next1] + D[node2][next1];
     }
@@ -58,13 +70,11 @@ int interSwapTwoNodesImpact(const vector<int> &solution, int idx, int external_n
 {
     int internal_node = solution[idx];
 
-    int delta;
+    int prev = cyclePrev(solution, idx);
+    int next = cycleNext(solution, idx);
 
-    int prev = idx == 0 ? solution[(solution_size - 1)] : solution[idx - 1];
-    int next = idx == (solution_size - 1) ? solution[0] : solution[idx + 1];
-
-    delta = -D[prev][internal_node] + D[prev][external_node] - D[internal_node][next]
-            + D[external_node][next] - costs[internal_node] + costs[external_node];
+    int delta = -D[prev][internal_node] + D[prev][external_node] - D[internal_node][next]
+                + D[external_node][next] - costs[internal_node] + costs[external_node];
     return delta;
 }
 
