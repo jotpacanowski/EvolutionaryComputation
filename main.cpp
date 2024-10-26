@@ -115,6 +115,20 @@ struct SolutionStats {
         average_numerator += value;
         average_denominator += 1;
     }
+
+    [[nodiscard]] string format_latex_3() const
+    {
+        return std::format("{:>7} & {:>12} & {:>7}",
+                           format_with_spaces((long long)this->best_sol_value),
+                           format_with_spaces(this->average()),
+                           format_with_spaces((long long)this->worst_sol_value));
+    }
+    [[nodiscard]] string format_latex_one_field() const
+    {
+        return std::format("{:>12} ({:>7} - {:>7})", format_with_spaces(this->average()),
+                           format_with_spaces((long long)this->best_sol_value),
+                           format_with_spaces((long long)this->worst_sol_value));
+    }
 };
 
 void evalWithStarting(const TSPInstance& instance, TSPSolverStarting solver,
@@ -135,13 +149,7 @@ void evalWithStarting(const TSPInstance& instance, TSPSolverStarting solver,
     if (instance_name.ends_with(".csv")) {
         instance_name.remove_suffix(4);
     }
-    latextables << std::format(
-        // "{:6} & {:>7} & {:>11.3f} & {:>7} \\\\\n",
-        "{:12} & {:>7} & {:>12} & {:>7} \\\\\n", solver_name,
-        // format values
-        format_with_spaces((long long)stats.best_sol_value),
-        format_with_spaces(stats.average()),
-        format_with_spaces((long long)stats.worst_sol_value));
+    latextables << std::format("{:12} & {} \\\\\n", solver_name, stats.format_latex_3());
 
     cout << std::format(
         "   best: {:>7}\n"
