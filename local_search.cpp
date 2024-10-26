@@ -240,8 +240,8 @@ vector<int> localSearchGreedy(vector<int> solution,
                               bool edges = false)
 {
     assert(solution.size() == solution_size);
+    assert(solution.size() == (distanceMatrix.size() + 1) / 2);
     int variable = 0;
-    int delta;
     int pos1, pos2;
     bool found = false;
     int best_external, best_internal;
@@ -282,6 +282,7 @@ vector<int> localSearchGreedy(vector<int> solution,
                 if (found) break;
                 for (int i2 : id2_random) {
                     if (i1 == i2) continue;
+                    int delta;
                     if (edges) {
                         if (i2 - i1 < 2) continue;                    // skip (0, 1)
                         if ((solution_size + i1) - i2 < 2) continue;  // skip (0,99)
@@ -307,8 +308,8 @@ vector<int> localSearchGreedy(vector<int> solution,
                 if (found) break;
                 int idx = findIndex(solution, internal);
                 for (int external : not_in_sol) {
-                    delta = interSwapTwoNodesImpact(solution, distanceMatrix, costs, idx,
-                                                    external);
+                    int delta = interSwapTwoNodesImpact(solution, distanceMatrix, costs,
+                                                        idx, external);
                     delta = -delta;   // WE WANT IMPROVEMENT -> smaller score
                     if (delta > 0) {  // Steepest variation
                         // cout << "GREEDY IMRPOVEMENT " << delta << endl;
@@ -328,7 +329,14 @@ vector<int> localSearchGreedy(vector<int> solution,
             found = false;
             if (variable == 0) {
                 if (edges) {
-                    reverse(solution.begin() + pos1, solution.begin() + pos2);
+                    assert(pos1 != pos2);
+                    if (pos1 < pos2) {
+                        // past-the-end iterator: adding +1
+                        reverse(solution.begin() + pos1, solution.begin() + pos2 + 1);
+                    }
+                    else if (pos2 < pos1) {
+                        reverse(solution.begin() + pos2, solution.begin() + pos1 + 1);
+                    }
                 }
                 else {
                     iter_swap(solution.begin() + pos1, solution.begin() + pos2);
