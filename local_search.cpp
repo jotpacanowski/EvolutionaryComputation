@@ -5,8 +5,7 @@
 #include "headers.hpp"
 
 int intraSwapTwoNodesImpact(const vector<int> &solution, int id1, int id2,
-                            const vector<vector<int>> &distanceMatrix,
-                            const int solution_size)
+                            const vector<vector<int>> &D, const int solution_size)
 {
     int node1 = solution[id1];
     int node2 = solution[id2];
@@ -19,25 +18,20 @@ int intraSwapTwoNodesImpact(const vector<int> &solution, int id1, int id2,
     int next2 = id2 == (solution_size - 1) ? solution[0] : solution[id2 + 1];
 
     if (next1 == node2) {  // id1+1=id2
-        delta = -distanceMatrix[prev1][node1] + distanceMatrix[prev1][node2] -
-                distanceMatrix[node2][next2] + distanceMatrix[node1][next2];
+        delta = -D[prev1][node1] + D[prev1][node2] - D[node2][next2] + D[node1][next2];
         return delta;
     }
     if (next2 == node1) {
-        delta = -distanceMatrix[node1][next1] + distanceMatrix[node2][next1] -
-                distanceMatrix[prev2][node2] + distanceMatrix[prev2][node1];
+        delta = -D[node1][next1] + D[node2][next1] - D[prev2][node2] + D[prev2][node1];
         return delta;
     }
-    delta = -distanceMatrix[prev1][node1] + distanceMatrix[prev1][node2] -
-            distanceMatrix[node1][next1] + distanceMatrix[node2][next1] -
-            distanceMatrix[prev2][node2] + distanceMatrix[prev2][node1] -
-            distanceMatrix[node2][next2] + distanceMatrix[node1][next2];
+    delta = -D[prev1][node1] + D[prev1][node2] - D[node1][next1] + D[node2][next1]
+            - D[prev2][node2] + D[prev2][node1] - D[node2][next2] + D[node1][next2];
     return delta;
 }
 
 int intraSwapTwoEdgesImpact(const vector<int> &solution, int id1, int id2,
-                            const vector<vector<int>> &distanceMatrix,
-                            const int solution_size)
+                            const vector<vector<int>> &D, const int solution_size)
 {
     int node1 = solution[id1];
     int node2 = solution[id2];
@@ -47,44 +41,38 @@ int intraSwapTwoEdgesImpact(const vector<int> &solution, int id1, int id2,
         prev1 = id1 == 0 ? solution[(solution_size - 1)] : solution[id1 - 1];
         next2 = id2 == (solution_size - 1) ? solution[0] : solution[id2 + 1];
 
-        delta = -distanceMatrix[prev1][node1] + distanceMatrix[prev1][node2] -
-                distanceMatrix[node2][next2] + distanceMatrix[node1][next2];
+        delta = -D[prev1][node1] + D[prev1][node2] - D[node2][next2] + D[node1][next2];
     }
     else {  //(id1 > id2)
         next1 = id1 == (solution_size - 1) ? solution[0] : solution[id1 + 1];
         prev2 = id2 == 0 ? solution[(solution_size - 1)] : solution[id2 - 1];
 
-        delta = -distanceMatrix[prev2][node2] + distanceMatrix[prev2][node1] -
-                distanceMatrix[node1][next1] + distanceMatrix[node2][next1];
+        delta = -D[prev2][node2] + D[prev2][node1] - D[node1][next1] + D[node2][next1];
     }
     return delta;
 }
 
 int interSwapTwoNodesImpact(const vector<int> &solution, int idx, int external_node,
-                            const vector<vector<int>> &distanceMatrix,
-                            const vector<int> &costs, const int solution_size)
+                            const vector<vector<int>> &D, const vector<int> &costs,
+                            const int solution_size)
 {
     int internal_node = solution[idx];
 
     int delta;
 
-    int prev1 = idx == 0 ? solution[(solution_size - 1)] : solution[idx - 1];
-    int next1 = idx == (solution_size - 1) ? solution[0] : solution[idx + 1];
-    // int prev2 = id2 == 0 ? solution[(solution_size - 1)] : solution[id2 - 1];
-    // int next2 = id2 == (solution_size - 1) ? solution[0] : solution[id2 + 1];
+    int prev = idx == 0 ? solution[(solution_size - 1)] : solution[idx - 1];
+    int next = idx == (solution_size - 1) ? solution[0] : solution[idx + 1];
 
-    delta = -distanceMatrix[prev1][internal_node] + distanceMatrix[prev1][external_node] -
-            distanceMatrix[internal_node][next1] + distanceMatrix[external_node][next1] -
-            costs[internal_node] + costs[external_node];
+    delta = -D[prev][internal_node] + D[prev][external_node] - D[internal_node][next]
+            + D[external_node][next] - costs[internal_node] + costs[external_node];
     return delta;
 }
 
 int findIndex(const vector<int> &arr, int item)
-{  // https://www.delftstack.com/howto/cpp/find-in-vector-in-cpp/
-    // GŁUPIE, PEWNIE MOŻNA ŁATWO ZMIENIĆ
+{
     auto ret = std::find(arr.begin(), arr.end(), item);
-    if (ret != arr.end()) return ret - arr.begin();
-    return -1;
+    if (ret == arr.end()) return -1;
+    return ret - arr.begin();
 }
 
 vector<int> localSearch(vector<int> solution, const vector<vector<int>> &distanceMatrix,
