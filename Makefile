@@ -3,8 +3,9 @@
 
 CC = gcc
 CXX = g++
-CXXFLAGS := -std=c++20 -O2
-CXXFLAGS += -Wall -Wno-sign-compare
+CXXFLAGS ?= -O2 -Wall -Wno-sign-compare
+# override commandline: specify standard
+override CXXFLAGS := -std=c++20 ${CXXFLAGS}
 
 TARGET = main
 BUILD_DIR = build
