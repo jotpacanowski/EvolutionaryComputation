@@ -134,11 +134,6 @@ vector<int> steepestLocalSearch(vector<int> solution,
             not_in_sol.push_back(i);
         }
     }
-    std::random_device rd;
-    std::mt19937 g(rd());
-
-    std::shuffle(not_in_sol.begin(), not_in_sol.end(), g);
-    std::shuffle(in_sol.begin(), in_sol.end(), g);
 
     int pos1 = -5;
     int pos2 = -5;
@@ -190,9 +185,6 @@ vector<int> steepestLocalSearch(vector<int> solution,
                     }
                 }
             }
-
-            std::shuffle(not_in_sol.begin(), not_in_sol.end(), g);
-            std::shuffle(in_sol.begin(), in_sol.end(), g);
         }
         if (found) {
             if (intra_moves == true) {
