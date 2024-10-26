@@ -157,7 +157,12 @@ def plot_tsp(df, seq=None, title="TSP", show=True):
 def main():
     for each_file in results:
         print(each_file.stem)
-        inst, method, baw = each_file.stem.split("_")
+        try:
+            inst, method, baw = each_file.stem.split("_")
+        except ValueError:
+            print(f"\n\n  bad name: {each_file.stem.split('_')}\n\n")
+            # break
+            continue
         if baw != "best":
             continue
 
