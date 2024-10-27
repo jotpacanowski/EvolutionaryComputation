@@ -56,14 +56,16 @@ for each in ["TSPA", "TSPB"]:
 
 
 # %%
-results = list(Path("data/results/").rglob("*.txt"))
+# results = list(Path("data/results/").rglob("*.txt"))
+results = list(Path("data/results-LS/").rglob("*.txt"))
 # print(*[p.as_posix() for p in results], sep='\n')
 # print(*[p.stem.split("_") for p in results], sep="\n")
 
 
 # %%
 
-PLOTOUT = Path("data/plots/")
+# PLOTOUT = Path("data/plots/")
+PLOTOUT = Path("data/plots-LS/")
 PLOTOUT.mkdir(exist_ok=True)
 
 DISPLAY_TITLE = {
@@ -158,13 +160,15 @@ def main():
     for each_file in results:
         print(each_file.stem)
         try:
-            inst, method, baw = each_file.stem.split("_")
+            # inst, method, baw = each_file.stem.split("_")
+            inst, steepest, initial, nodesedges, baw = each_file.stem.split("_")
         except ValueError:
             print(f"\n\n  bad name: {each_file.stem.split('_')}\n\n")
             # break
             continue
         if baw != "best":
             continue
+        inst = inst.removesuffix(".csv")
 
         sol = [int(ln) for ln in each_file.read_text().splitlines()]
         df, (node_costs, xy_points, D) = instances[inst]
@@ -177,14 +181,17 @@ def main():
         else:
             assert len(set(sol[1:])) == len(sol[1:]), "unique indices in cycle"
 
-        em = DISPLAY_TITLE[method.lower()]
+        # em = DISPLAY_TITLE[method.lower()]
         plot_tsp(
             df,
             sol,
-            title=f"{em} - {baw} {inst} solution\nscore {zd+zc}",
+            # title=f"{em} - {baw} {inst} solution\nscore {zd+zc}",
+            title=f"initial {initial} {steepest} LS, {nodesedges}\nBest solution",
             show=False,
         )
-        plt.savefig(PLOTOUT / f"{inst}_{baw}_{method}.png", dpi=DPI)
+        # plt.savefig(PLOTOUT / f"{inst}_{baw}_{method}.png", dpi=DPI)
+        fname = PLOTOUT / each_file.with_suffix(".png").name
+        plt.savefig(fname, dpi=DPI)
         # plt.show()
 
         print("")
@@ -195,7 +202,7 @@ def main():
 """
         # % \caption{Instance ``A''}
         # % \label{fig:instanceA}
-        s = s.replace("res/plot", f"plots/{inst}_{baw}_{method}")
+        s = s.replace("res/plot", f"plots/{fname.stem}")
         print(s.strip())
 
         print(r"\begin{verbatim}")

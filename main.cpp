@@ -126,7 +126,8 @@ struct SolutionStats {
     }
     [[nodiscard]] string format_latex_one_field() const
     {
-        return std::format("{:>12} ({:>7} - {:>7})", format_with_spaces(this->average()),
+        // return std::format("{:>12} ({:>7} - {:>7})",
+        return std::format("{} ({} - {})", format_with_spaces((long long)this->average()),
                            format_with_spaces((long long)this->best_sol_value),
                            format_with_spaces((long long)this->worst_sol_value));
     }
@@ -150,7 +151,10 @@ void evalWithStarting(const TSPInstance& instance, TSPSolverStarting solver,
     if (instance_name.ends_with(".csv")) {
         instance_name.remove_suffix(4);
     }
-    latextables << std::format("{:12} & {} \\\\\n", solver_name, stats.format_latex_3());
+    // latextables << std::format("{:12} & {} \\\\\n", solver_name,
+    // stats.format_latex_3());
+    latextables << std::format(" {} & {} & \n", solver_name,
+                               stats.format_latex_one_field());
 
     cout << std::format(
         "   best: {:>7}\n"
@@ -259,10 +263,10 @@ void main_local_search(const TSPInstance& inst, string_view input_file_name)
                     if (strncmp(initname, "random", 6) == 0) {
                         if (!random) continue;
                     }
-                    else if (random) {
+                    else if (random || strcmp(initname, "w-regret") != 0) {
                         continue;
                     }
-                    cout << std::format("Initial {}\n", initname);
+                    // cout << std::format("Initial {}\n", initname);
 
                     SolutionStats local_stats;
 
@@ -276,9 +280,19 @@ void main_local_search(const TSPInstance& inst, string_view input_file_name)
                         auto value = inst.evaluateSolution(solution);
                         stats.track(solution, value);
                     }
-                    cout << std::format("\x1b[32m\t  {:8} with {} type:\x1b[0m {}\n",
-                                        funcname, movename, stats.format_latex_3());
+                    // cout << std::format("\x1b[32m\t  {:8} with {} type:\x1b[0m {}\n",
+                    //                     funcname, movename, stats.format_latex_3());
+                    // "{{initial {}, {} LS \\\\ {} swap}} : \x1b[0m {}\n", initname,
+                    cout << std::format("{{initial {}\\\\ {} LS, {}}}  & {} & \n",
+                                        initname, funcname, movename,
+                                        stats.format_latex_one_field());
                     cout << std::format("Took {}\n", timer.pretty_print());
+
+                    // save to different folder
+                    printResults(stats.best_sol, true,
+                                 std::format("{}_{}_{}_{}_best.txt", input_file_name,
+                                             funcname, initname, movename),
+                                 "data/results-LS");
                 }
                 // cout << "count = " << stats.average_denominator << endl;
             }
@@ -303,6 +317,7 @@ int main(int argc, char* argv[])
     const auto inst = TSPInstance::readFromFile(input_file_name);
 
     // run::main_assignment_2(inst, input_file_name);
+
     // run::weightedExperiments(inst);
 
     run::main_local_search(inst, input_file_name);
