@@ -1,6 +1,8 @@
 #include <cstring>
+#include <functional>
 #include <initializer_list>
 #include <sstream>
+#include <utility>
 #include <vector>
 
 #include "headers.hpp"
@@ -127,7 +129,21 @@ void main_assignment_2(const TSPInstance& inst, string_view input_file_name)
 
 void main_local_search(const TSPInstance& inst, string_view input_file_name)
 {
-    const initializer_list<pair<decltype(&steepestLocalSearch), const char*>> LS_TYPES{
+    // Prepare lookup tables for nearest neighbors
+    const SteepestLocalSearchWithCandidateMoves s_ls_candidate_moves(inst.distances,
+                                                                     inst.costs, 10);
+
+    using _Func = std::function<vector<int>(vector<int>, const vector<vector<int>>&,
+                                            const vector<int>&, bool)>;
+    const initializer_list<pair<_Func, const char*>> LS_TYPES{
+        {[&s_ls_candidate_moves](vector<int> solution,
+                                 const vector<vector<int>>& distanceMatrix,
+                                 const vector<int>& costs, bool edges) {
+             // call member function
+             return s_ls_candidate_moves.do_local_search(std::move(solution),
+                                                         distanceMatrix, costs, edges);
+         },
+         "St-LS-candidates"},
         {steepestLocalSearch, "steepest"},
         {greedyLocalSearch, "greedy"},
     };
@@ -151,7 +167,6 @@ void main_local_search(const TSPInstance& inst, string_view input_file_name)
                     else if (random || strcmp(initname, "w-regret") != 0) {
                         continue;
                     }
-                    // cout << std::format("Initial {}\n", initname);
 
                     SolutionStats local_stats;
 
@@ -165,9 +180,6 @@ void main_local_search(const TSPInstance& inst, string_view input_file_name)
                         auto value = inst.evaluateSolution(solution);
                         stats.track(solution, value);
                     }
-                    // cout << std::format("\x1b[32m\t  {:8} with {} type:\x1b[0m {}\n",
-                    //                     funcname, movename, stats.format_latex_3());
-                    // "{{initial {}, {} LS \\\\ {} swap}} : \x1b[0m {}\n", initname,
                     cout << std::format("{{initial {}\\\\ {} LS, {}}}  & {} & \n",
                                         initname, funcname, movename,
                                         stats.format_latex_one_field());
