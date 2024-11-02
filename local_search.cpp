@@ -375,3 +375,209 @@ vector<int> greedyLocalSearch(vector<int> solution,
     }
     return solution;
 }
+
+SteepestLocalSearchWithCandidateMoves::SteepestLocalSearchWithCandidateMoves(
+    const vector<vector<int>> &distanceMatrix, const vector<int> &costs,
+    // default: 10
+    int candidate_count)
+{
+    const int N = distanceMatrix.size();
+    nearest10_only_distance.resize(N);
+    assert(candidate_count < N);
+    vector<pair<int, int>> nearest;
+    nearest.reserve(N - 1);
+
+    for (int i = 0; i < N; i++) {
+        // reuse already allocated memory
+        nearest.clear();
+        for (int j = 0; j < N; j++) {
+            if (i == j) continue;
+            nearest.emplace_back(distanceMatrix[i][j], j);
+        }
+        // std::sort(nearest.begin(), nearest.end());
+        std::partial_sort(nearest.begin(), nearest.begin() + candidate_count,
+                          nearest.end());
+        for (int j = 0; j < candidate_count; j++) {
+            nearest10_only_distance[i].push_back(nearest[j].second);
+        }
+    }
+    nearest10_objective.resize(N);
+    for (int i = 0; i < N; i++) {
+        nearest.clear();
+        for (int j = 0; j < N; j++) {
+            if (i == j) continue;
+            nearest.emplace_back(distanceMatrix[i][j] + costs[j], j);
+        }
+        // std::sort(nearest.begin(), nearest.end());
+        std::partial_sort(nearest.begin(), nearest.begin() + candidate_count,
+                          nearest.end());
+        for (int j = 0; j < candidate_count; j++) {
+            nearest10_objective[i].push_back(nearest[j].second);
+        }
+    }
+}
+
+vector<int> SteepestLocalSearchWithCandidateMoves::do_local_search(
+    vector<int> solution, const vector<vector<int>> &distanceMatrix,
+    const vector<int> &costs, bool edges) const
+{
+    const auto N = distanceMatrix.size();
+    const auto solution_size = solution.size();
+    assert(solution.size() == (N + 1) / 2);
+
+    vector<uint8_t> is_in_sol(N, 0);
+    vector<int> in_sol;
+    vector<int> not_in_sol;
+    in_sol.reserve(solution_size);
+    not_in_sol.reserve(N - solution_size);
+    for (int i = 0; i < N; i++) {
+        if (std::find(solution.begin(), solution.end(), i) != solution.end()) {
+            in_sol.push_back(i);
+            is_in_sol[i] = 1;
+        }
+        else {
+            not_in_sol.push_back(i);
+        }
+    }
+
+    int pos1 = -5;
+    int pos2 = -5;
+    int highest_delta = 0;
+    int best_external, best_internal;
+    bool found = true;
+    int _iters = 0;
+    for (; found; _iters++) {
+        found = false;
+        bool intra_moves = true;
+        {  // Do intra-route moves
+            for (int i1 = 0; i1 < solution_size; i1++) {
+                // Interate only over the candidates
+                // considering only nearest 10 vertices without the cost,
+                // because score of solution already contains these costs
+                for (int i2_node_id : nearest10_only_distance[solution[i1]]) {
+                    int i2 = findIndex(solution, i2_node_id);
+                    // if (is_in_sol[i2] == 0) continue;
+                    if (i2 == -1) continue;
+                    int delta;
+
+                    // Candidate edge that we would like to introduce is:
+                    // solution[i1] -> i2
+
+                    if (edges) {
+                        // two cases,
+                        // because intraSwapTwoEdgesImpact assumes i1 < i2
+
+                        if (i1 < i2) {
+                            int i3 = cycleIndexBefore(solution, i2);
+
+                            if (i3 - i1 < 2 || ((solution_size + i1) - i3 < 2)) continue;
+
+                            delta =
+                                intraSwapTwoEdgesImpact(solution, distanceMatrix, i1, i3);
+                            delta = -delta;
+                            if (delta > highest_delta) {
+                                highest_delta = delta;
+                                pos1 = i1;
+                                pos2 = i3;
+                                found = true;
+                            }
+                        }
+                        else {
+                            int i3 = cycleIndexAfter(solution, i2);
+
+                            if (i1 - i3 < 2 || ((solution_size + i3) - i1 < 2)) continue;
+
+                            delta =
+                                intraSwapTwoEdgesImpact(solution, distanceMatrix, i3, i1);
+                            delta = -delta;
+                            if (delta > highest_delta) {
+                                highest_delta = delta;
+                                pos1 = i3;
+                                pos2 = i1;
+                                found = true;
+                            }
+                        }
+                    }
+                    else {
+                        int i3 = cycleIndexBefore(solution, i1);
+                        delta = intraSwapTwoNodesImpact(solution, distanceMatrix, i2, i3);
+                        delta = -delta;
+                        if (delta > highest_delta) {
+                            highest_delta = delta;
+                            pos1 = i2;
+                            pos2 = i3;
+                            found = true;
+                        }
+                        int i4 = cycleIndexAfter(solution, i1);
+                        delta = intraSwapTwoNodesImpact(solution, distanceMatrix, i1, i4);
+                        delta = -delta;
+                        if (delta > highest_delta) {
+                            highest_delta = delta;
+                            pos1 = i1;
+                            pos2 = i4;
+                            found = true;
+                        }
+                    }
+                }
+            }
+        }
+        {  // Do inter-route moves
+            for (int internal : in_sol) {
+                int idx = findIndex(solution, internal);
+                assert(idx != -1);
+                assert(is_in_sol[internal] == 1);
+                // iterate only over the candidates
+                for (int external : nearest10_objective[internal]) {
+                    if (is_in_sol[external]) continue;
+
+                    int delta = interSwapTwoNodesImpact(solution, distanceMatrix, costs,
+                                                        idx, external);
+                    delta = -delta;
+                    if (delta > highest_delta) {
+                        highest_delta = delta;
+                        best_external = external;
+                        best_internal = internal;
+                        pos1 = idx;
+                        found = true;
+                        // also:
+                        intra_moves = false;
+                    }
+                }
+            }
+        }
+        if (found) {
+            if (intra_moves == true) {
+                if (edges) {
+                    assert(pos1 != pos2);
+                    if (pos1 < pos2) {
+                        assert(pos2 - pos1 >= 2);
+                        // past-the-end iterator: adding +1
+                        reverse(solution.begin() + pos1, solution.begin() + pos2 + 1);
+                    }
+                    else if (pos2 < pos1) {
+                        assert(pos1 - pos2 >= 2);
+                        reverse(solution.begin() + pos2, solution.begin() + pos1 + 1);
+                    }
+                }
+                else {
+                    assert(pos1 != pos2);
+                    iter_swap(solution.begin() + pos1, solution.begin() + pos2);
+                }
+            }
+            else {
+                assert(best_internal != best_external);
+                solution[pos1] = best_external;
+                std::erase(in_sol, best_internal);
+                in_sol.push_back(best_external);
+                std::erase(not_in_sol, best_external);
+                not_in_sol.push_back(best_internal);
+                is_in_sol[best_internal] = 0;
+                is_in_sol[best_external] = 1;
+            }
+            // Reset
+            // found = false;
+            highest_delta = 0;
+        }
+    }
+    return solution;
+}
