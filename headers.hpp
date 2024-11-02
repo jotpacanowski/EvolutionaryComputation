@@ -169,3 +169,91 @@ struct SolutionStats {
                            format_with_spaces((long long)this->worst_sol_value));
     }
 };
+
+template <typename T>
+struct VectorSummary {
+    size_t count;
+    double mean;
+    double std_dev;
+    T min;
+    T percentile_25;
+    T median;
+    T percentile_75;
+    T max;
+    double sum;
+};
+
+// VectorSummary<T> describe_vec(const vector<T>& data)
+template <typename T>
+VectorSummary<T> describe_vec(vector<T>& data)
+{
+    if (data.empty()) {
+        cerr << "Data vector is empty.\n";
+        exit(5);
+    }
+
+    auto count = data.size();
+
+    VectorSummary<T> summary = {
+        // initialize fields
+        .count = data.size()
+        // ...
+    };
+
+    summary.mean = accumulate(data.begin(), data.end(), 0.0) / count;
+
+    double sum_of_squares =
+        accumulate(data.begin(), data.end(), 0.0, [summary](double sum, double val) {
+            return sum + (val - summary.mean) * (val - summary.mean);
+        });
+    // Note: Bessel's correction: divide by N-1 for sample standard deviation
+    // https://en.wikipedia.org/wiki/Standard_deviation
+    // Quote: dividing by n would underestimate the variability
+    summary.std_dev = std::sqrt(sum_of_squares / (count - 1));
+
+    // vector<T> sorted_data = data;
+    // std::sort(sorted_data.begin(), sorted_data.end());
+    std::sort(data.begin(), data.end());
+    summary.min = data.front();
+    summary.max = data.back();
+
+    auto percentile = [&](double p) {
+        double idx = p * (count - 1);
+        size_t idx_below = floor(idx);
+        size_t idx_above = ceil(idx);
+        if (idx_below == idx_above) return data[idx_below];
+        // for median: interpolate between middle elements if count is even
+        T r = (double)data[idx_below];
+        r += (double)(data[idx_above] - data[idx_below]) / 2.0;
+        return r;
+    };
+
+    summary.percentile_25 = percentile(0.25);
+    summary.median = percentile(0.50);
+    summary.percentile_75 = percentile(0.75);
+
+    summary.sum = accumulate(data.begin(), data.end(), 0.0);
+
+    return summary;
+}
+
+template <typename T>
+void print_summary(const VectorSummary<T>& summary)
+{
+    // cout << format("Count: {}\n", summary.count);
+    // cout << format("Mean: {:.2f}\n", summary.mean);
+    // cout << format("Std Dev: {:.2f}\n", summary.std_dev);
+    // cout << format("Min: {}\n", summary.min);
+    // cout << format("25%: {}\n", summary.percentile_25);
+    // cout << format("50% (Median): {}\n", summary.median);
+    // cout << format("75%: {}\n", summary.percentile_75);
+    // cout << format("Max: {}\n", summary.max);
+    // cout << format("Sum: {:.2f}\n", summary.sum);
+
+    cout << format("{:>6} {:>10} {:>10} {:>10} {:>10} {:>10} {:>10} {:>10}\n", "Count",
+                   "Mean", "Std. Dev.", "Min", "25%", "50%", "75%", "Max");
+    cout << format("{:>6} {:>10.2f} {:>10.2f} {:>10} {:>10} {:>10} {:>10} {:>10}\n",
+                   summary.count, summary.mean, summary.std_dev, summary.min,
+                   summary.percentile_25, summary.median, summary.percentile_75,
+                   summary.max);
+}

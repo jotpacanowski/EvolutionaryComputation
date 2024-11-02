@@ -170,20 +170,29 @@ void main_local_search(const TSPInstance& inst, string_view input_file_name)
 
                     SolutionStats local_stats;
 
-                    timer.reset();
                     for (int starting = 0; starting < 200; starting++) {
                         const auto initial =
                             initsolver(inst.distances, inst.costs, starting);
 
+                        timer.reset();
                         auto solution = localsearchfunc(initial, inst.distances,
                                                         inst.costs, swaptype);
+                        auto t = timer.count_nanos() / 1000.0;
                         auto value = inst.evaluateSolution(solution);
                         stats.track(solution, value);
+                        stats.add_time(t);
                     }
                     cout << std::format("{{initial {}\\\\ {} LS, {}}}  & {} & \n",
                                         initname, funcname, movename,
                                         stats.format_latex_one_field());
-                    cout << std::format("Took {}\n", timer.pretty_print());
+                    cout << std::format(
+                        "Took {:.3f} s\n",
+                        // sum
+                        std::accumulate(stats.timings.begin(), stats.timings.end(), 0LL)
+                            / 1e6);
+                    // cout << "Timing summary (\u03BCs):\n";
+                    cout << "Timing summary in us:\n";
+                    print_summary(describe_vec(stats.timings));
 
                     // save to different folder
                     printResults(stats.best_sol, true,
