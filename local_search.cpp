@@ -1,3 +1,5 @@
+#include "local_search.hpp"
+
 #include <algorithm>
 #include <cstdint>
 #include <vector>
@@ -12,16 +14,32 @@
 #define assert(fact)
 #endif
 
+// Return the previous node of solution[index], wrapping around
 constexpr int cyclePrev(const vector<int> &solution, int index)
 {
     if (index == 0) return solution[solution.size() - 1];
     return solution[index - 1];
 }
 
+// Return the next node of solution[index], wrapping around
 constexpr int cycleNext(const vector<int> &solution, int index)
 {
     if (index == solution.size() - 1) return solution[0];
     return solution[index + 1];
+}
+
+// Subtract 1 from index, wrapping around solution size
+constexpr int cycleIndexBefore(const vector<int> &solution, int index)
+{
+    if (index == 0) return solution.size() - 1;
+    return index - 1;
+}
+
+// Add 1 to index, wrapping around solution size
+constexpr int cycleIndexAfter(const vector<int> &solution, int index)
+{
+    if (index == solution.size() - 1) return 0;
+    return index + 1;
 }
 
 // Intra-route move: swap two nodes within solution
@@ -71,9 +89,11 @@ int intraSwapTwoEdgesImpact(const vector<int> &solution, const vector<vector<int
                             int id1, int id2)
 {
     if (id1 > id2) {
-        swap(id1,id2);
+        swap(id1, id2);
     }
     assert(id1 < id2);
+    assert(id2 - id1 >= 2);
+    assert((solution.size() + id1) - id2 >= 2);
     int node1 = solution[id1];
     int node2 = solution[id2];
 
@@ -116,7 +136,7 @@ int findIndex(const vector<int> &arr, int item)
 
 vector<int> steepestLocalSearch(vector<int> solution,
                                 const vector<vector<int>> &distanceMatrix,
-                                const vector<int> &costs, bool edges = false)
+                                const vector<int> &costs, bool edges)
 {
     const auto N = distanceMatrix.size();
     const auto solution_size = solution.size();
@@ -147,7 +167,7 @@ vector<int> steepestLocalSearch(vector<int> solution,
             for (int i1 = 0; i1 < solution_size; i1++) {
                 for (int i2 = 0; i2 < i1; i2++) {
                     int delta;
-                    assert(i1>i2);
+                    assert(i1 > i2);
                     if (edges) {
                         if (i1 - i2 < 2) continue;                    // skip (0, 1)
                         if ((solution_size + i1) - i2 < 2) continue;  // skip (0,99)
@@ -168,7 +188,7 @@ vector<int> steepestLocalSearch(vector<int> solution,
                 }
             }
         }
-        {  // Do inter moves
+        {  // Do inter-route moves
             for (int internal : in_sol) {
                 int idx = findIndex(solution, internal);
                 for (int external : not_in_sol) {
@@ -226,7 +246,7 @@ vector<int> steepestLocalSearch(vector<int> solution,
 
 vector<int> greedyLocalSearch(vector<int> solution,
                               const vector<vector<int>> &distanceMatrix,
-                              const vector<int> &costs, bool edges = false)
+                              const vector<int> &costs, bool edges)
 {
     const auto solution_size = solution.size();
     assert(solution.size() == (distanceMatrix.size() + 1) / 2);
