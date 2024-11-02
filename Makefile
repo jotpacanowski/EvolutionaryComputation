@@ -18,9 +18,9 @@ DEPS := $(OBJS:.cpp.o=.cpp.d)
 all: $(TARGET)
 
 run: $(TARGET)
-# ./$(TARGET)
-	./$(TARGET) TSPA.csv
-	./$(TARGET) TSPB.csv
+	./$(TARGET)
+# ./$(TARGET) TSPA.csv
+# ./$(TARGET) TSPB.csv
 
 $(TARGET): $(OBJS) | $(BUILD_DIR)
 	$(CXX) $(CXXFLAGS) -o $@ $^

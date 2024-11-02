@@ -96,12 +96,9 @@ struct SolutionStats {
     int worst_sol_value = 0;
 
     long long average_numerator = 0;
-    long long average_denominator = 0;
+    long long count = 0;
 
-    [[nodiscard]] double average() const
-    {
-        return (double)(average_numerator) / average_denominator;
-    }
+    [[nodiscard]] double average() const { return (double)(average_numerator) / count; }
 
     void track(const vector<int>& sol, int value)
     {
@@ -114,7 +111,7 @@ struct SolutionStats {
             worst_sol = sol;
         }
         average_numerator += value;
-        average_denominator += 1;
+        count += 1;
     }
 
     [[nodiscard]] string format_latex_3() const
@@ -308,18 +305,28 @@ void main_local_search(const TSPInstance& inst, string_view input_file_name)
 
 int main(int argc, char* argv[])
 {
-    const char* input_file_name = "TSPA.csv";
+    vector<string_view> input_file_names;
     if (argc >= 2) {
         const auto arg = argv[1];
         // if (fs::exists(arg)) {
-        input_file_name = arg;
+        input_file_names.emplace_back(arg);
     }
-    const auto inst = TSPInstance::readFromFile(input_file_name);
+    else {
+        input_file_names.emplace_back("TSPA.csv");
+        input_file_names.emplace_back("TSPB.csv");
+    }
 
-    // run::main_assignment_2(inst, input_file_name);
+    for (auto input_file_name : input_file_names) {
+        const auto inst = TSPInstance::readFromFile(input_file_name);
+        cout << "\n";
 
-    // run::weightedExperiments(inst);
+        // run::main_assignment_2(inst, input_file_name);
 
-    run::main_local_search(inst, input_file_name);
+        // run::weightedExperiments(inst);
+
+        run::main_local_search(inst, input_file_name);
+
+        cout << "\n\n";
+    }
     return 0;
 }
