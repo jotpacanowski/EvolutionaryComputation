@@ -15,12 +15,12 @@ DEPS := $(OBJS:.cpp.o=.cpp.d)
 
 .phony: all clean run rebuild
 
+all: $(TARGET)
+
 # allows `make -j4`
 rebuild: clean
 	@$(MAKE) --no-print-directory main
 # make all
-
-all: $(TARGET)
 
 run: $(TARGET)
 	./$(TARGET)
