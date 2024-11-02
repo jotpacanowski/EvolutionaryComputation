@@ -1,5 +1,8 @@
 #pragma once
 
+#include <optional>
+#include <vector>
+
 #include "headers.hpp"
 
 class Stopwatch {
@@ -40,6 +43,8 @@ struct SolutionStats {
     long long average_numerator = 0;
     long long count = 0;
 
+    vector<int> scores;
+
     [[nodiscard]] double average() const { return (double)(average_numerator) / count; }
 
     void track(const vector<int>& sol, int value)
@@ -54,6 +59,8 @@ struct SolutionStats {
         }
         average_numerator += value;
         count += 1;
+
+        scores.push_back(value);
     }
 
     vector<long long> timings;
@@ -162,3 +169,58 @@ void print_summary(const VectorSummary<T>& summary)
                    summary.percentile_25, summary.median, summary.percentile_75,
                    summary.max);
 }
+
+template <typename T>
+basic_ostream<char>& operator<<(basic_ostream<char>& f, const VectorSummary<T>& summary)
+{
+    f << "{ ";
+    f << R"("count": )" << summary.count << ", ";
+    f << R"("mean": )" << summary.mean << ", ";
+    f << R"("std_dev": )" << summary.std_dev << ", ";
+    f << R"("min": )" << summary.min << ", ";
+    f << R"("percentile_25": )" << summary.percentile_25 << ", ";
+    f << R"("median": )" << summary.median << ", ";
+    f << R"("percentile_75": )" << summary.percentile_75 << ", ";
+    f << R"("max": )" << summary.max << ", ";
+    f << R"("sum": )" << summary.sum;
+    f << "} ";
+
+    return f;
+}
+
+struct ResultsWriter {
+    // A or B
+    string_view instance;
+    // "greedyCycle"
+    string_view solver_name;
+    // e.g. random, or  "greedyCycle"
+    string_view initial;
+    // greedy, steepest
+    string_view local_search_type;
+    // nodes or edges
+    string_view intra_route_swap;
+    // statistics of objective function values
+    // VectorSummary<int> scores_summary;
+    std::optional<VectorSummary<int>> scores_summary;
+    // statistics of method timings in microseconds (us)
+    std::optional<VectorSummary<long long>> timing_summary;
+
+    // Format as single line of JSON.
+    // Empty values are not printed.
+    void print_json_to(basic_ostream<char>& f) const
+    {
+        f << "{ ";
+        if (!instance.empty()) f << R"("instance": ")" << instance << "\", ";
+        if (!solver_name.empty()) f << R"("solver": ")" << solver_name << "\", ";
+        if (!initial.empty()) f << R"("initial": ")" << initial << "\", ";
+        if (!local_search_type.empty())
+            f << R"("local_search": ")" << local_search_type << "\", ";
+        if (!intra_route_swap.empty())
+            f << R"("intra_route_swap": ")" << intra_route_swap << "\", ";
+
+        if (scores_summary) f << R"("score_summary": )" << *scores_summary << ", ";
+        if (timing_summary) f << R"("time_us_summary": )" << *timing_summary << ", ";
+
+        f << "\"_\":null} ";
+    }
+};

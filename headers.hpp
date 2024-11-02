@@ -45,7 +45,8 @@ static inline std::string format_with_spaces(double number)
     return std::format("{}.{:03}", int_part, std::abs(fractional));
 }
 
-static inline ofstream openOutFile(string_view filename, string_view prefix = "")
+static inline ofstream openOutFile(string_view filename, string_view prefix = "",
+                                   std::ios_base::openmode mode = std::ios_base::out)
 {
     fs::path path;
     if (prefix.empty()) {
@@ -54,7 +55,7 @@ static inline ofstream openOutFile(string_view filename, string_view prefix = ""
     else {
         path = fs::path(prefix) / filename;
     }
-    std::ofstream out(path);
+    std::ofstream out(path, mode);
     if (!out.is_open()) {
         // perror("Error");
         std::error_code ec(errno, std::generic_category());
@@ -71,7 +72,7 @@ static inline ofstream openOutFile(string_view filename, string_view prefix = ""
                 exit(1);
             }
             // Try again
-            out.open(path);
+            out.open(path, mode);
             if (!out.is_open()) {
                 perror("second open");
                 exit(1);

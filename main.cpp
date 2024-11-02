@@ -1,6 +1,8 @@
 #include <cstring>
+#include <fstream>
 #include <functional>
 #include <initializer_list>
+#include <ios>
 #include <sstream>
 #include <utility>
 #include <vector>
@@ -155,9 +157,20 @@ void main_local_search(const TSPInstance& inst, string_view input_file_name)
     Stopwatch timer_all;
     latextables.clear();
 
+    string_view out_fname = "data/results-LS/summary.json";
+    ofstream out = openOutFile(out_fname, "", std::ios_base::app | std::ios_base::binary);
+    // out << "[\n";
+    ResultsWriter wr;
+    wr.instance = input_file_name;
+    if (input_file_name.ends_with(".csv")) {
+        wr.instance.remove_suffix(4);
+    }
+
     // for each Greedy / Steepest
     for (auto [localsearchfunc, funcname] : LS_TYPES) {
+        wr.local_search_type = funcname;
         for (auto [swaptype, movename] : INTRA_SWAP_TYPES) {
+            wr.intra_route_swap = movename;
             for (int _is_random = 0; _is_random < 2; _is_random++) {
                 bool random = (_is_random == 0);
                 SolutionStats stats;
@@ -168,6 +181,8 @@ void main_local_search(const TSPInstance& inst, string_view input_file_name)
                     else if (random || strcmp(initname, "w-regret") != 0) {
                         continue;
                     }
+
+                    wr.initial = initname;
 
                     SolutionStats local_stats;
 
@@ -200,15 +215,19 @@ void main_local_search(const TSPInstance& inst, string_view input_file_name)
                                  std::format("{}_{}_{}_{}_best.txt", input_file_name,
                                              funcname, initname, movename),
                                  "data/results-LS");
+
+                    wr.scores_summary = describe_vec(stats.scores);
+                    wr.timing_summary = describe_vec(stats.timings);
+                    wr.print_json_to(out);
+                    out << "\n";
                 }
-                // cout << "count = " << stats.average_denominator << endl;
             }
         }
     }
 
     cout << std::format("Everything took {}\n", timer_all.pretty_print());
 
-    // printResults(sol2_nodes, true, "local_test.txt");
+    cout << "[ok] Saved " << out_fname << endl;
 }
 
 }  // namespace run
