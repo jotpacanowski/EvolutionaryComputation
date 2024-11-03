@@ -28,15 +28,24 @@ void evalWithStarting(const TSPInstance& instance, TSPSolverStarting solver,
 {
     SolutionStats stats;
     Stopwatch tic;
+    Stopwatch timer;
 
     for (int i = 0; i < 200; i++) {
         // starting node index i
+
+        timer.reset();
         auto sol = solver(instance.distances, instance.costs, i);
+        auto t = timer.count_nanos() / 1000.0;
         int value = instance.evaluateSolution(sol);
         stats.track(sol, value);
+        stats.add_time(t);
     }
 
     cout << std::format("Took {}\n", tic.pretty_print());
+
+    // for single iteration
+    cout << "Timing summary in us:\n";
+    print_summary(describe_vec(stats.timings));
 
     if (instance_name.ends_with(".csv")) {
         instance_name.remove_suffix(4);
