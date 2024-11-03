@@ -509,11 +509,11 @@ vector<int> SteepestLocalSearchWithCandidateMoves::do_local_search(
                             found = true;
                         }
                         int i4 = cycleIndexAfter(solution, i1);
-                        delta = intraSwapTwoNodesImpact(solution, distanceMatrix, i1, i4);
+                        delta = intraSwapTwoNodesImpact(solution, distanceMatrix, i2, i4);
                         delta = -delta;
                         if (delta > highest_delta) {
                             highest_delta = delta;
-                            pos1 = i1;
+                            pos1 = i2;
                             pos2 = i4;
                             found = true;
                         }
