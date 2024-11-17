@@ -92,8 +92,8 @@ int intraSwapTwoEdgesImpact(const vector<int> &solution, const vector<vector<int
         swap(id1, id2);
     }
     assert(id1 < id2);
-    assert(id2 - id1 >= 2);
-    assert((solution.size() + id1) - id2 >= 2);
+    assert(id2 - id1 >= 1);
+    assert((solution.size() + id1) - id2 >= 1);
     int node1 = solution[id1];
     int node2 = solution[id2];
 
@@ -169,9 +169,8 @@ vector<int> steepestLocalSearch(vector<int> solution,
                     int delta;
                     assert(i1 > i2);
                     if (edges) {
-                        if (i1 - i2 < 2) continue;                    // skip (0, 1)
-                        if ((solution_size + i1) - i2 < 2) continue;  // skip (0,99)
-                        if ((solution_size + i2) - i1 < 2) continue;  // skip (99,0)
+                        if (i2 == 0 && i1 == solution_size - 1)
+                            continue;  // skip (0,99) - considering single edge
                         delta = intraSwapTwoEdgesImpact(solution, distanceMatrix, i1, i2);
                     }
                     else {
@@ -293,9 +292,9 @@ vector<int> greedyLocalSearch(vector<int> solution,
                     if (i1 == i2) continue;
                     int delta;
                     if (edges) {
-                        if (i2 - i1 < 2) continue;                    // skip (0, 1)
-                        if ((solution_size + i1) - i2 < 2) continue;  // skip (0,99)
-                        if ((solution_size + i2) - i1 < 2) continue;  // skip (99,0)
+                        if (i2 == 0 && i1 == solution_size - 1)
+                            continue;  // skip (0,99) - considering single edge
+                        if (i1 == 0 && i2 == solution_size - 1) continue;
                         delta = intraSwapTwoEdgesImpact(solution, distanceMatrix, i1, i2);
                     }
                     else {
