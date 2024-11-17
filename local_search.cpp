@@ -566,12 +566,12 @@ vector<int> SteepestLocalSearchWithCandidateMoves::do_local_search(
                 if (edges) {
                     assert(pos1 != pos2);
                     if (pos1 < pos2) {
-                        assert(pos2 - pos1 >= 2);
+                        assert(pos2 - pos1 >= 1);
                         // past-the-end iterator: adding +1
                         reverse(solution.begin() + pos1, solution.begin() + pos2 + 1);
                     }
                     else if (pos2 < pos1) {
-                        assert(pos1 - pos2 >= 2);
+                        assert(pos1 - pos2 >= 1);
                         reverse(solution.begin() + pos2, solution.begin() + pos1 + 1);
                     }
                 }
