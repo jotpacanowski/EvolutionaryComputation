@@ -528,15 +528,32 @@ vector<int> SteepestLocalSearchWithCandidateMoves::do_local_search(
                 // iterate only over the candidates
                 for (int external : nearest10_objective[internal]) {
                     if (is_in_sol[external]) continue;
+                    // Candidate edge: insert "external" before or after "internal"
+
+                    int idx_bef = cycleIndexBefore(solution, idx);
 
                     int delta = interSwapTwoNodesImpact(solution, distanceMatrix, costs,
-                                                        idx, external);
+                                                        idx_bef, external);
                     delta = -delta;
                     if (delta > highest_delta) {
                         highest_delta = delta;
                         best_external = external;
-                        best_internal = internal;
-                        pos1 = idx;
+                        best_internal = cyclePrev(solution, idx);
+                        pos1 = idx_bef;
+                        found = true;
+                        // also:
+                        intra_moves = false;
+                    }
+
+                    int idx_aft = cycleIndexAfter(solution, idx);
+                    delta = interSwapTwoNodesImpact(solution, distanceMatrix, costs,
+                                                    idx_aft, external);
+                    delta = -delta;
+                    if (delta > highest_delta) {
+                        highest_delta = delta;
+                        best_external = external;
+                        best_internal = cycleNext(solution, idx);
+                        pos1 = idx_aft;
                         found = true;
                         // also:
                         intra_moves = false;
