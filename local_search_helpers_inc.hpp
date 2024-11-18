@@ -31,3 +31,10 @@ constexpr int cycleIndexAfter(const vector<int> &solution, int index)
     if (index == solution.size() - 1) return 0;
     return index + 1;
 }
+
+static inline int findIndex(const vector<int> &arr, int item)
+{
+    auto ret = std::find(arr.begin(), arr.end(), item);
+    if (ret == arr.end()) return -1;
+    return ret - arr.begin();
+}

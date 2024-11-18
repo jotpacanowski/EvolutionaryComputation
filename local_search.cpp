@@ -101,13 +101,6 @@ int interSwapTwoNodesImpact(const vector<int> &solution, const vector<vector<int
     return delta;
 }
 
-int findIndex(const vector<int> &arr, int item)
-{
-    auto ret = std::find(arr.begin(), arr.end(), item);
-    if (ret == arr.end()) return -1;
-    return ret - arr.begin();
-}
-
 vector<int> steepestLocalSearch(vector<int> solution,
                                 const vector<vector<int>> &distanceMatrix,
                                 const vector<int> &costs, bool edges)
