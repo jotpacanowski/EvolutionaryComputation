@@ -1,3 +1,5 @@
+#include "solvers.hpp"
+
 #include <iostream>
 
 #include "headers.hpp"
@@ -138,9 +140,9 @@ vector<int> greedyCycleTSP(const vector<vector<int>>& distanceMatrix,
                 auto before =
                     solution[(j == 0) ? (solution.size() - 1) : (j - 1)];  // node before
                 auto after = solution[j];                                  // node after
-                impact = distanceMatrix[after][candidate] +
-                         distanceMatrix[before][candidate] -
-                         distanceMatrix[before][after] + costs[candidate];
+                impact = distanceMatrix[after][candidate]
+                         + distanceMatrix[before][candidate]
+                         - distanceMatrix[before][after] + costs[candidate];
 
                 if (impact < best_impact) {
                     best_impact = impact;
@@ -192,9 +194,9 @@ vector<int> regret2TSP(const vector<vector<int>>& distanceMatrix,
                 auto before =
                     solution[(j == 0) ? (solution.size() - 1) : (j - 1)];  // node before
                 auto after = solution[j];                                  // node after
-                impact = distanceMatrix[after][candidate] +
-                         distanceMatrix[before][candidate] -
-                         distanceMatrix[before][after] + costs[candidate];
+                impact = distanceMatrix[after][candidate]
+                         + distanceMatrix[before][candidate]
+                         - distanceMatrix[before][after] + costs[candidate];
 
                 if (impact < best_impact) {
                     second_best_impact = best_impact;
@@ -220,7 +222,8 @@ vector<int> regret2TSP(const vector<vector<int>>& distanceMatrix,
 
 vector<int> weightedSum2RegretTSP(const vector<vector<int>>& distanceMatrix,
                                   const vector<int>& costs, int starting_node,
-                                  float objective_weight = 0.5)
+                                  float objective_weight  // = 0.5
+)
 {
     const int N = distanceMatrix.size();
     vector<int> solution;
@@ -255,9 +258,9 @@ vector<int> weightedSum2RegretTSP(const vector<vector<int>>& distanceMatrix,
                 auto before =
                     solution[(j == 0) ? (solution.size() - 1) : (j - 1)];  // node before
                 auto after = solution[j];                                  // node after
-                impact = distanceMatrix[after][candidate] +
-                         distanceMatrix[before][candidate] -
-                         distanceMatrix[before][after] + costs[candidate];
+                impact = distanceMatrix[after][candidate]
+                         + distanceMatrix[before][candidate]
+                         - distanceMatrix[before][after] + costs[candidate];
 
                 if (impact < best_impact) {
                     best_impact = impact;

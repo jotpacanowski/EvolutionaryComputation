@@ -1,5 +1,6 @@
-BasedOnStyle:  Google
-Language:        Cpp
-IndentWidth:     4
-ColumnLimit:     90
+BasedOnStyle: Google
+Language: Cpp
+IndentWidth: 4
+ColumnLimit: 90
 BreakBeforeBraces: Stroustrup
+BreakBeforeBinaryOperators: NonAssignment

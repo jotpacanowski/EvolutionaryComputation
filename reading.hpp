@@ -1,3 +1,4 @@
+#pragma once
 #include "headers.hpp"
 
 struct TSPInstance {
@@ -5,9 +6,9 @@ struct TSPInstance {
     vector<vector<int>> distances;
     vector<int> costs;
 
-    static TSPInstance readFromFile(const std::string& filename)
+    static TSPInstance readFromFile(string_view filename)
     {
-        string path = "data/instances/" + filename;
+        auto path = fs::path("data/instances/") / filename;
         std::ifstream data(path);
         if (!data.is_open()) {
             cerr << "Open " << path << " failed: ";

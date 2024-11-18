@@ -3,35 +3,41 @@
 
 CC = gcc
 CXX = g++
-CXXFLAGS := -std=c++20 -O2
-CXXFLAGS += -Wall -Wno-sign-compare
+CXXFLAGS ?= -O2 -Wall -Wno-sign-compare -march=native
+# override commandline: specify standard
+override CXXFLAGS := -std=c++20 ${CXXFLAGS}
 
 TARGET = main
 BUILD_DIR = build
-SRCS := main.cpp solvers.cpp
+SRCS := main.cpp solvers.cpp local_search.cpp
 OBJS := $(SRCS:%.cpp=$(BUILD_DIR)/%.cpp.o)
 DEPS := $(OBJS:.cpp.o=.cpp.d)
 
-.phony: all clean main run
+.phony: all clean run rebuild
 
 all: $(TARGET)
 
+# allows `make -j4`
+rebuild: clean
+	@$(MAKE) --no-print-directory main
+# make all
+
 run: $(TARGET)
-	# ./$(TARGET)
-	./$(TARGET) TSPA.csv
-	./$(TARGET) TSPB.csv
+	./$(TARGET)
+# ./$(TARGET) TSPA.csv
+# ./$(TARGET) TSPB.csv
+
+$(BUILD_DIR):
+	@mkdir -p $@
 
 $(TARGET): $(OBJS) | $(BUILD_DIR)
-	$(CXX) $(CXXFLAGS) -o $@ $^
+	$(CXX) -pipe $(CXXFLAGS) -o $@ $^
 
 # in build/ folder
 $(BUILD_DIR)/%.cpp.o: %.cpp | $(BUILD_DIR)
-	$(CXX) $(CXXFLAGS) -MMD -MP -c $< -o $@
+	$(CXX) -pipe $(CXXFLAGS) -MMD -c $< -o $@
 
 -include $(DEPS)
-
-$(BUILD_DIR):
-	mkdir -p $@
 
 clean:
 	rm -rf $(BUILD_DIR) $(TARGET)
