@@ -463,41 +463,38 @@ vector<int> SteepestLocalSearchWithCandidateMoves::do_local_search(
                     // solution[i1] -> i2
 
                     if (edges) {
-                        // two cases,
-                        // because intraSwapTwoEdgesImpact assumes i1 < i2
+                        int a = min(i1, i2);
+                        int b = max(i1, i2);
+                        // assert(a < b);
 
-                        if (i1 < i2) {
-                            int i3 = cycleIndexBefore(solution, i2);
-
-                            if (i3 - i1 < 2 || ((solution_size + i1) - i3 < 2)) continue;
-
+                        int i3 = cycleIndexBefore(solution, b);
+                        if ((i3 != a) && (!(i3 == 0 && a == solution_size - 1))
+                            && (!(a == 0 && i3 == solution_size - 1))) {
                             delta =
-                                intraSwapTwoEdgesImpact(solution, distanceMatrix, i1, i3);
+                                intraSwapTwoEdgesImpact(solution, distanceMatrix, a, i3);
                             delta = -delta;
                             if (delta > highest_delta) {
                                 highest_delta = delta;
-                                pos1 = i1;
+                                pos1 = a;
                                 pos2 = i3;
                                 found = true;
                             }
                         }
-                        else {
-                            int i3 = cycleIndexAfter(solution, i2);
-
-                            if (i1 - i3 < 2 || ((solution_size + i3) - i1 < 2)) continue;
-
+                        int i4 = cycleIndexAfter(solution, a);
+                        if ((i4 != b) && (!(i4 == 0 && b == solution_size - 1))
+                            && (!(b == 0 && i4 == solution_size - 1))) {
                             delta =
-                                intraSwapTwoEdgesImpact(solution, distanceMatrix, i3, i1);
+                                intraSwapTwoEdgesImpact(solution, distanceMatrix, i4, b);
                             delta = -delta;
                             if (delta > highest_delta) {
                                 highest_delta = delta;
-                                pos1 = i3;
-                                pos2 = i1;
+                                pos1 = i4;
+                                pos2 = b;
                                 found = true;
                             }
                         }
                     }
-                    else {
+                    else {  // nodes
                         int i3 = cycleIndexBefore(solution, i1);
                         delta = intraSwapTwoNodesImpact(solution, distanceMatrix, i2, i3);
                         delta = -delta;
