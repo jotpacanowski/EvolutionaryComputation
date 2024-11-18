@@ -14,33 +14,7 @@
 #define assert(fact)
 #endif
 
-// Return the previous node of solution[index], wrapping around
-constexpr int cyclePrev(const vector<int> &solution, int index)
-{
-    if (index == 0) return solution[solution.size() - 1];
-    return solution[index - 1];
-}
-
-// Return the next node of solution[index], wrapping around
-constexpr int cycleNext(const vector<int> &solution, int index)
-{
-    if (index == solution.size() - 1) return solution[0];
-    return solution[index + 1];
-}
-
-// Subtract 1 from index, wrapping around solution size
-constexpr int cycleIndexBefore(const vector<int> &solution, int index)
-{
-    if (index == 0) return solution.size() - 1;
-    return index - 1;
-}
-
-// Add 1 to index, wrapping around solution size
-constexpr int cycleIndexAfter(const vector<int> &solution, int index)
-{
-    if (index == solution.size() - 1) return 0;
-    return index + 1;
-}
+#include "local_search_helpers_inc.hpp"
 
 // Intra-route move: swap two nodes within solution
 int intraSwapTwoNodesImpact(const vector<int> &solution, const vector<vector<int>> &D,
