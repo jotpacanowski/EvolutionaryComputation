@@ -34,3 +34,7 @@ class SteepestLocalSearchWithCandidateMoves {
         // defaulting to edges-based type of intra-route move
         bool edges = true) const;
 };
+
+vector<int> steepest_LS_LM(vector<int> solution,
+                           const vector<vector<int>> &distanceMatrix,
+                           const vector<int> &costs, bool edges);

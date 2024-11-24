@@ -2,6 +2,7 @@
 
 #include <algorithm>
 #include <cstdint>
+#include <unordered_set>
 #include <vector>
 
 #include "headers.hpp"
@@ -562,5 +563,527 @@ vector<int> SteepestLocalSearchWithCandidateMoves::do_local_search(
             highest_delta = 0;
         }
     }
+    return solution;
+}
+
+// all ints in this struct are node IDs for the problem instance
+// (the same representation for different solutions of an instance)
+struct LSMove {
+    int score_delta;
+    bool is_edge_swap;
+    // for internal-external:
+    int pos1;
+    int pos2;
+    // meta-data for edge-swap validity:
+    // (as in intraSwapTwoEdgesImpact)
+    int before_a;
+    int after_a;
+    int before_b;
+    int after_b;
+};
+
+inline bool operator<(const LSMove &lhs, const LSMove &rhs)
+{
+    return lhs.score_delta < rhs.score_delta;
+}
+
+inline bool operator==(const LSMove &lhs, const LSMove &rhs)
+{
+    // https://stackoverflow.com/questions/5740310/no-operator-found-while-comparing-structs-in-c
+    return tie(lhs.score_delta, lhs.is_edge_swap, lhs.pos1, lhs.pos2, lhs.before_a,
+               lhs.after_b)
+           == tie(rhs.score_delta, rhs.is_edge_swap, rhs.pos1, rhs.pos2, rhs.before_a,
+                  rhs.after_b);
+}
+
+struct CustomMoveHash {
+    std::size_t operator()(const LSMove &x) const noexcept
+    {
+        return std::hash<int>()(x.score_delta) ^ std::hash<bool>()(x.is_edge_swap)
+               ^ std::hash<int>()(x.pos1);
+    }
+};
+
+#include "msls_ils.hpp"
+
+vector<int> steepest_LS_LM(vector<int> solution,
+                           const vector<vector<int>> &distanceMatrix,
+                           const vector<int> &costs, bool edges)
+{
+    assert(edges);
+    const auto N = distanceMatrix.size();
+    const auto solution_size = solution.size();
+    assert(solution.size() == (N + 1) / 2);
+    vector<int> in_sol;
+    vector<int> not_in_sol;
+    in_sol.reserve(solution_size);
+    not_in_sol.reserve(N - solution_size);
+    for (int i = 0; i < N; i++) {
+        if (std::find(solution.begin(), solution.end(), i) != solution.end()) {
+            in_sol.push_back(i);
+        }
+        else {
+            not_in_sol.push_back(i);
+        }
+    }
+
+    vector<int> node_id_to_solution(N);
+    std::fill(node_id_to_solution.begin(), node_id_to_solution.end(), -1);
+    for (int i = 0; i < solution_size; i++) {
+        node_id_to_solution[solution[i]] = i;
+    }
+
+    vector<LSMove> improving_moves_list;
+    improving_moves_list.reserve(15'000 * 2);
+
+    int lowest_delta = 0;
+    bool found = true;
+
+    // phase 1 - init LM (list of moves)
+    found = false;
+    LSMove best_move;
+    best_move.score_delta = 0;
+    {
+        {  // Do intra moves
+            for (int i1 = 0; i1 < solution_size; i1++) {
+                for (int i2 = 0; i2 < i1; i2++) {
+                    // assert(i1 > i2);
+                    // if (edges) {
+                    if (i2 == 0 && i1 == solution_size - 1)
+                        continue;  // skip (0,99) - considering single edge
+                    int delta = intraSwapTwoEdgesImpact(solution, distanceMatrix, i1, i2);
+
+                    LSMove currentmove = {.score_delta = delta,
+                                          .is_edge_swap = true,
+                                          .pos1 = solution[i2],
+                                          .pos2 = solution[i1],
+                                          .before_a = cyclePrev(solution, i2),
+                                          .after_a = cycleNext(solution, i2),
+                                          .before_b = cyclePrev(solution, i1),
+                                          .after_b = cycleNext(solution, i1)
+
+                    };
+                    if (delta < 0) {
+                        improving_moves_list.push_back(currentmove);
+                    }
+                    if (delta < lowest_delta) {
+                        found = true;
+                        best_move = currentmove;
+                        lowest_delta = delta;
+                    }
+                }
+            }
+        }
+        {  // Do inter-route moves
+            for (int internal : in_sol) {
+                int idx = findIndex(solution, internal);
+                for (int external : not_in_sol) {
+                    int delta = interSwapTwoNodesImpact(solution, distanceMatrix, costs,
+                                                        idx, external);
+                    LSMove currentmove = {.score_delta = delta,
+                                          .is_edge_swap = false,
+                                          .pos1 = internal,
+                                          .pos2 = external,
+
+                                          .before_a = cyclePrev(solution, idx),
+                                          .after_a = cycleNext(solution, idx),
+                                          .before_b = -1,
+                                          .after_b = -1};
+
+                    if (delta < 0) {
+                        improving_moves_list.push_back(currentmove);
+                    }
+                    if (delta < lowest_delta) {
+                        found = true;
+                        best_move = currentmove;
+                        lowest_delta = delta;
+                    }
+                }
+            }
+        }
+
+        std::sort(improving_moves_list.begin(), improving_moves_list.end());
+
+        if (found) {
+            // assert(found && improving_moves_list.front() == best_move);
+            auto _i = std::find(improving_moves_list.begin(), improving_moves_list.end(),
+                                best_move);
+            assert(improving_moves_list.end() != _i);
+            for (auto it = improving_moves_list.begin();
+                 it != improving_moves_list.end() && it != _i; ++it) {
+                assert(it->score_delta == best_move.score_delta);
+            }
+        }
+    }
+
+    // best_move = improving_moves_list.front();
+    assert(best_move.score_delta == improving_moves_list[0].score_delta);
+    best_move = improving_moves_list[0];
+
+    // found = true;
+    // lowest_delta = 0;
+    // phase 2
+    int _iters = 0;
+    unordered_set<int> affected_node_ids;
+    affected_node_ids.reserve(N);
+    do {
+        ++_iters;
+        affected_node_ids.clear();
+
+        /*
+            auto try_edge_swap = [&](int i1, int i2) {
+                // Do intra moves
+                if (i2 > i1) swap(i1, i2);
+
+                assert(i2 < i1);
+                if (i2 == 0 && i1 == solution_size - 1)
+                    return;  // skip (0,99) - considering single edge
+                int delta = intraSwapTwoEdgesImpact(solution, distanceMatrix, i1, i2);
+
+                LSMove currentmove = {.score_delta = delta,
+                                      .is_edge_swap = true,
+                                      .pos1 = solution[i2],
+                                      .pos2 = solution[i1],
+                                      .before_a = cyclePrev(solution, i2),
+                                      .after_a = cycleNext(solution, i2),
+                                      .before_b = cyclePrev(solution, i1),
+                                      .after_b = cycleNext(solution, i1)
+
+                };
+                if (delta < 0) {
+                    improving_moves_list.push_back(currentmove);
+                }
+                // if (delta < lowest_delta) {
+                //     found = true;
+                //     best_move = currentmove;
+                //     lowest_delta = delta;
+                // }
+            };
+
+            auto try_internal_external = [&](int internal, int external) {
+                assert(findIndex(solution, internal) >= 0);
+                assert(findIndex(solution, external) < 0);
+                int idx = findIndex(solution, internal);
+                int delta =
+                    interSwapTwoNodesImpact(solution, distanceMatrix, costs, idx,
+           external); LSMove currentmove = {.score_delta = delta, .is_edge_swap = false,
+                                      .pos1 = internal,
+                                      .pos2 = external,
+
+                                      .before_a = cyclePrev(solution, idx),
+                                      .after_a = cycleNext(solution, idx),
+                                      .before_b = -1,
+                                      .after_b = -1};
+
+                if (delta < 0) {
+                    improving_moves_list.push_back(currentmove);
+                }
+                // if (delta < lowest_delta) {
+                //     found = true;
+                //     best_move = currentmove;
+                //     lowest_delta = delta;
+                // }
+            };
+            */
+
+        // int score_before = _evaluate_solution(solution, distanceMatrix, costs);
+
+        // Apply best_move
+        if (found) {
+            if (best_move.is_edge_swap == true) {
+                auto pos1 = node_id_to_solution[best_move.pos1];
+                auto pos2 = node_id_to_solution[best_move.pos2];
+                assert(pos1 != pos2);
+                if (pos1 < pos2) {
+                    int prev1 = cyclePrev(solution, pos1);
+                    int next2 = cycleNext(solution, pos2);
+                    assert(prev1 == best_move.before_a);
+                    assert(next2 == best_move.after_b);
+                    // past-the-end iterator: adding +1
+                    reverse(solution.begin() + pos1, solution.begin() + pos2 + 1);
+
+                    affected_node_ids.insert(prev1);
+                    affected_node_ids.insert(best_move.pos1);
+                    affected_node_ids.insert(best_move.pos2);
+                    affected_node_ids.insert(next2);
+                    assert(prev1 < 200);
+                    assert(best_move.pos1 < 200);
+                    assert(best_move.pos2 < 200);
+                    assert(next2 < 200);
+                }
+                else if (pos2 < pos1) {
+                    int prev1 = cyclePrev(solution, pos2);
+                    int next2 = cycleNext(solution, pos1);
+                    assert(prev1 == best_move.before_a);
+                    assert(next2 == best_move.after_b);
+                    reverse(solution.begin() + pos2, solution.begin() + pos1 + 1);
+
+                    affected_node_ids.insert(prev1);
+                    affected_node_ids.insert(best_move.pos2);
+                    affected_node_ids.insert(best_move.pos1);
+                    affected_node_ids.insert(next2);
+                    assert(prev1 < 200);
+                    assert(best_move.pos1 < 200);
+                    assert(best_move.pos2 < 200);
+                    assert(next2 < 200);
+                }
+            }
+            else {
+                int best_internal = best_move.pos1;
+                int pos1 = node_id_to_solution[best_move.pos1];
+                int best_external = best_move.pos2;
+                assert(best_internal != best_external);
+                solution[pos1] = best_external;
+                std::erase(in_sol, best_internal);
+                in_sol.push_back(best_external);
+                std::erase(not_in_sol, best_external);
+                not_in_sol.push_back(best_internal);
+
+                // affected_node_ids.insert(best_internal);  // was removed
+                affected_node_ids.insert(best_external);
+                affected_node_ids.insert(cyclePrev(solution, pos1));
+                affected_node_ids.insert(cycleNext(solution, pos1));
+                assert(best_external < 200);
+                assert(cyclePrev(solution, pos1) < 200);
+                assert(cycleNext(solution, pos1) < 200);
+            }
+            // Re-compute
+            //
+            std::fill(node_id_to_solution.begin(), node_id_to_solution.end(), -1);
+            for (int i = 0; i < solution_size; i++) {
+                node_id_to_solution[solution[i]] = i;
+            }
+
+            // Now forget about best_move:
+            std::erase(improving_moves_list, best_move);
+        }
+
+        // int score_after = _evaluate_solution(solution, distanceMatrix, costs);
+        // assert(score_after == score_before + best_move.score_delta);
+        // assert(score_after == score_before + lowest_delta);
+        //
+        lowest_delta = 0;
+        found = false;
+
+        // compute new moves
+        // vector<decltype(improving_moves_list)::iterator> moves_to_remove;
+        // vector<bool> moves_to_remove;
+        // vector<uint8_t> moves_to_remove(improving_moves_list.size(), 0);
+        std::unordered_set<LSMove, CustomMoveHash> moves_to_remove;
+        // for (auto move : improving_moves_list) {
+        // for (auto it = improving_moves_list.begin(); it != improving_moves_list.end();
+        // ++it) {
+        for (auto moveidx = 0; moveidx < improving_moves_list.size(); ++moveidx) {
+            auto move = improving_moves_list[moveidx];
+            if (move.is_edge_swap == false) {
+                auto internal = move.pos1;
+                auto external = move.pos2;
+
+                auto ii = node_id_to_solution[internal];
+                if (ii < 0) {
+                    // moves_to_remove[moveidx] = 1;
+                    moves_to_remove.insert(move);
+                }
+
+                auto i_bef = cycleIndexBefore(solution, ii);
+                auto i_aft = cycleIndexAfter(solution, ii);
+
+                if (solution[i_bef] != move.before_a || solution[i_aft] != move.after_a) {
+                    moves_to_remove.insert(move);
+                }
+
+                // removed: before_a -- internal -- after_b
+                // added:   ... -- external -- ...
+            }
+            else {
+                // edge 1
+                auto pa = move.before_a;
+                auto a = move.pos1;
+
+                auto i_pa = node_id_to_solution[pa];
+                auto i_a = node_id_to_solution[a];
+                if (i_pa < 0 || i_a < 0) {  // removed from solution
+                    // moves_to_remove[moveidx] = 1;
+                    moves_to_remove.insert(move);
+                }
+                if (i_a - i_pa != 1 || (i_a != 0 && i_pa != solution_size - 1)) {
+                    moves_to_remove.insert(move);
+                }
+
+                // edge 2
+
+                auto ab = move.after_b;
+                auto b = move.pos2;
+
+                auto i_ab = node_id_to_solution[ab];
+                auto i_b = node_id_to_solution[b];
+                if (i_ab < 0 || i_b < 0) {  // removed from solution
+                    // moves_to_remove[moveidx] = 1;
+                    moves_to_remove.insert(move);
+                }
+                if (i_ab - i_b != 1 || (i_ab != 0 && i_b != solution_size - 1)) {
+                    moves_to_remove.insert(move);
+                }
+            }
+        }
+        auto _end =
+            std::remove_if(improving_moves_list.begin(), improving_moves_list.end(),
+                           [&](auto value) { return moves_to_remove.contains(value); }
+
+            );
+
+        {  // Do intra moves
+            // for (int i1 = 0; i1 < solution_size; i1++) {
+            for (auto i1_id : affected_node_ids) {
+                int i1 = node_id_to_solution[i1_id];
+                // assert(i1 >= 0);
+                if (i1 == -1) continue;
+                for (int i2 = 0; i2 < i1; i2++) {
+                    // assert(i1 > i2);
+                    // if (edges) {
+                    if (i2 == 0 && i1 == solution_size - 1)
+                        continue;  // skip (0,99) - considering single edge
+                    int delta = intraSwapTwoEdgesImpact(solution, distanceMatrix, i1, i2);
+
+                    LSMove currentmove = {.score_delta = delta,
+                                          .is_edge_swap = true,
+                                          .pos1 = solution[i2],
+                                          .pos2 = solution[i1],
+                                          .before_a = cyclePrev(solution, i2),
+                                          .after_a = cycleNext(solution, i2),
+                                          .before_b = cyclePrev(solution, i1),
+                                          .after_b = cycleNext(solution, i1)
+
+                    };
+                    if (delta < 0) {
+                        improving_moves_list.push_back(currentmove);
+                    }
+                    // if (delta < lowest_delta) {
+                    //     found = true;
+                    //     best_move = currentmove;
+                    //     lowest_delta = delta;
+                    // }
+                }
+            }
+        }
+        {  // Do inter-route moves
+            // for (int internal : in_sol) {
+            for (int internal : affected_node_ids) {
+                int idx = node_id_to_solution[internal];
+                if (idx < 0) continue;
+                for (int external : not_in_sol) {
+                    int delta = interSwapTwoNodesImpact(solution, distanceMatrix, costs,
+                                                        idx, external);
+                    LSMove currentmove = {.score_delta = delta,
+                                          .is_edge_swap = false,
+                                          .pos1 = internal,
+                                          .pos2 = external,
+
+                                          .before_a = cyclePrev(solution, idx),
+                                          .after_a = cycleNext(solution, idx),
+                                          .before_b = -1,
+                                          .after_b = -1};
+                    if (delta < 0) {
+                        improving_moves_list.push_back(currentmove);
+                    }
+                    // if (delta < lowest_delta) {
+                    //     found = true;
+                    //     best_move = currentmove;
+                    //     lowest_delta = delta;
+                    // }
+                }
+            }
+        }
+
+        // std::sort(improving_moves_list.begin(), improving_moves_list.end());
+        // best_move = improving_moves_list.front();
+        // if (lowest_delta != best_move.score_delta) {
+        //     lowest_delta = best_move.score_delta;
+        // }
+        found = false;
+        best_move.score_delta = 0;
+        lowest_delta = 0;
+        for (auto move : improving_moves_list) {
+            // check if move is valid
+            if (move.is_edge_swap == false) {
+                auto internal = move.pos1;
+                auto external = move.pos2;
+
+                auto ii = node_id_to_solution[internal];
+                auto ei = node_id_to_solution[external];
+                if (ii < 0 || ei >= 0) continue;
+
+                auto i_bef = cycleIndexBefore(solution, ii);
+                auto i_aft = cycleIndexAfter(solution, ii);
+
+                if (solution[i_bef] != move.before_a || solution[i_aft] != move.after_a)
+                    continue;
+
+                int delta = interSwapTwoNodesImpact(solution, distanceMatrix, costs, ii,
+                                                    external);
+                if (delta < 0 && delta < lowest_delta) {
+                    found = true;
+                    lowest_delta = delta;
+                    best_move = {.score_delta = delta,
+                                 .is_edge_swap = false,
+                                 .pos1 = internal,
+                                 .pos2 = external,
+
+                                 .before_a = cyclePrev(solution, ii),
+                                 .after_a = cycleNext(solution, ii),
+                                 .before_b = -1,
+                                 .after_b = -1};
+                }
+            }
+            else {
+                // edge 1
+                auto pa = move.before_a;
+                auto a = move.pos1;
+
+                auto i_pa = node_id_to_solution[pa];
+                auto i_a = node_id_to_solution[a];
+                if (i_pa < 0 || i_a < 0) {
+                    continue;
+                }
+                // if (i_a - i_pa != 1 || (i_a != 0 && i_pa != solution_size - 1)) {
+                //     moves_to_remove.insert(move);
+                // }
+
+                auto ab = move.after_b;
+                auto b = move.pos2;
+
+                auto i_ab = node_id_to_solution[ab];
+                auto i_b = node_id_to_solution[b];
+                if (i_ab < 0 || i_b < 0) {  // removed from solution
+                    continue;
+                }
+                // if (i_ab - i_b != 1 || (i_ab != 0 && i_b != solution_size - 1)) {
+                //     moves_to_remove.insert(move);
+                // }
+
+                int i1 = node_id_to_solution[a];
+                int i2 = node_id_to_solution[b];
+                if (i1 == 0 && i2 == solution_size - 1) continue;
+                if (i2 == 0 && i1 == solution_size - 1) continue;
+                if (i2 > i1) swap(i1, i2);
+                int delta = intraSwapTwoEdgesImpact(solution, distanceMatrix, i1, i2);
+                if (delta < 0 && delta < lowest_delta) {
+                    found = true;
+                    lowest_delta = delta;
+                    best_move = {.score_delta = delta,
+                                 .is_edge_swap = true,
+                                 .pos1 = solution[i2],
+                                 .pos2 = solution[i1],
+                                 .before_a = cyclePrev(solution, i2),
+                                 .after_a = cycleNext(solution, i2),
+                                 .before_b = cyclePrev(solution, i1),
+                                 .after_b = cycleNext(solution, i1)
+
+                    };
+                }
+            }
+        }
+    } while (found);
+
     return solution;
 }
