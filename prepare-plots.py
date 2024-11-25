@@ -57,7 +57,8 @@ for each in ["TSPA", "TSPB"]:
 
 # %%
 # results = list(Path("data/results/").rglob("*.txt"))
-results = list(Path("data/results-LS/").rglob("*.txt"))
+# results = list(Path("data/results-LS/").rglob("*.txt"))
+results = list(Path("data/results-6/").rglob("*.txt"))
 # print(*[p.as_posix() for p in results], sep='\n')
 # print(*[p.stem.split("_") for p in results], sep="\n")
 
@@ -65,17 +66,13 @@ results = list(Path("data/results-LS/").rglob("*.txt"))
 # %%
 
 # PLOTOUT = Path("data/plots/")
-PLOTOUT = Path("data/plots-LS/")
+PLOTOUT = Path("data/plots-6/")
 PLOTOUT.mkdir(exist_ok=True)
 
 DISPLAY_TITLE = {
-    "random": "Random",
-    "nn-end": "Nearest Neighbor (last only)",
-    "nn-any": "Nearest Neighbor (any)",
-    "greedycycle": "Greedy Cycle",
-    "regret": "2-regret",
-    # "regret": "2-Regret Greedy",
-    "w-regret": "weighted 2-Regret",
+    "iterative_LS": "Iterative Local Search",
+    "multiple_start_LS": "Multiple Start Local Search",
+
 }
 
 # %%
@@ -162,6 +159,10 @@ def main():
         try:
             # inst, method, baw = each_file.stem.split("_")
             inst, steepest, initial, nodesedges, baw = each_file.stem.split("_")
+            if steepest=="iterative":
+                steepest = "Iterative Local Search"
+            if steepest=="multiple":
+                steepest = "Multiple Start Local Search"
         except ValueError:
             print(f"\n\n  bad name: {each_file.stem.split('_')}\n\n")
             # break
@@ -186,7 +187,7 @@ def main():
             df,
             sol,
             # title=f"{em} - {baw} {inst} solution\nscore {zd+zc}",
-            title=f"initial {initial} {steepest} LS, {nodesedges}\nBest solution",
+            title=f"{steepest}\nBest solution",
             show=False,
         )
         # plt.savefig(PLOTOUT / f"{inst}_{baw}_{method}.png", dpi=DPI)

@@ -3,6 +3,7 @@
 #include <algorithm>
 #include <cstdlib>
 #include <numeric>
+#include <set>
 #include <unordered_set>
 #include <vector>
 
@@ -86,7 +87,7 @@ vector<int> multiple_start_steepestLS(const vector<vector<int>>& distanceMatrix,
     int bestscore = LARGE_SCORE;
     for (int iters = 0; iters < 200; iters++) {
         auto initial = generate_random_solution_sliding_window(distanceMatrix, costs,
-                                                               seed + 1 + iters);
+                                                               seed  * iters);
 
         auto sol = steepestLocalSearch(std::move(initial), distanceMatrix, costs);
         //
@@ -253,7 +254,7 @@ vector<int> greedyPath(vector<int>& vec, const vector<vector<int>>& D,
     is_in_sol[starting_node] = 1;
 
     int last = starting_node;
-    while (accumulate(is_in_sol.begin(), is_in_sol.end(), 0) < D.size()) {
+    for (int _ = 1; _ < vec.size(); _++) {
         int next = findNearestNeighbor(D, C, last, sol, is_in_sol);
         sol.push_back(next);
         is_in_sol[next] = 1;
@@ -362,17 +363,78 @@ vector<int> perturb4(const vector<vector<int>>& distanceMatrix, const vector<int
     return perturbed;
 }
 
+bool isunique(vector<int> vec)
+{
+    set<int> uniqueElements(vec.begin(), vec.end());
+    return uniqueElements.size() == vec.size();
+}
+vector<int> perturb5(const vector<vector<int>>& distanceMatrix, const vector<int>& costs,
+                     vector<int>& solution, int seed)
+{
+    srand(seed);
+    // pick n consecutive nodes (10, 20...90)
+    int n = rand() % 10 + 10;
+    int step = 2;
+    // rand() % 5 + 1 * 10;
+    vector<int> perturbed = solution;
+
+    int start_index = rand() % 50;
+    vector<int> new_chain;
+    for (int i = 0; i < (n * step); i += step) {
+        int index = (start_index + i) % solution.size();
+        new_chain.push_back(solution[index]);
+        std::erase(perturbed, solution[index]);
+    }
+    // if (!isunique(perturbed) || !isunique(new_chain)) {
+    //     cout << "pert: " << isunique(perturbed) << " new: " << isunique(new_chain)
+    //          << endl;
+    // }
+    // return solution;
+    // cout << "SIZE PERTURBED: " << perturbed.size() << " SHOLD BE "
+    //      << solution.size() - new_chain.size() << endl;
+    // cout << "chain size " << new_chain.size() << " should be " << n << endl;
+    new_chain = greedyPath(new_chain, distanceMatrix, costs);
+    // cout << "chain size " << new_chain.size() << endl;
+    // cout << "SIZE PERTURBED: " << perturbed.size() << " SHOLD BE "
+    //      << solution.size() - new_chain.size() << endl;
+    int current_index = start_index;
+    for (auto i : new_chain) {
+        perturbed.insert(perturbed.begin() + current_index, i);
+        current_index++;
+        current_index = (current_index >= solution.size()) ? 0 : current_index;
+    }
+    // if (!isunique(perturbed) || !isunique(new_chain)) {
+    //     cout << "pert: " << isunique(perturbed) << " new: " << isunique(new_chain)
+    //          << endl;
+    // }
+    // return solution;
+
+    return perturbed;
+}
+
 vector<int> iterative_steepest_LS(const vector<vector<int>>& distanceMatrix,
                                   const vector<int>& costs, int seed)
 {
     vector<int> sol =
         generate_random_solution_sliding_window(distanceMatrix, costs, seed + 1);
     int bestscore = _evaluate_solution(sol, distanceMatrix, costs);
+    int same_score_counter = 0;
+    int prev_score = bestscore;
     for (int iters = 0; iters < 500; iters++) {
-        auto perturbed = perturb4(distanceMatrix, costs, sol, seed);
+        auto perturbed = perturb5(distanceMatrix, costs, sol, seed * iters);
         // return sol;
         auto sol2 = steepestLocalSearch(std::move(perturbed), distanceMatrix, costs);
         int score = _evaluate_solution(sol2, distanceMatrix, costs);
+        if (score == prev_score) {
+            same_score_counter++;
+            if (same_score_counter>10){
+                cout<<"Got to " << iters << " iterations."<<endl;
+                return sol;
+            }
+        }
+        else {
+            same_score_counter = 0;
+        }
         if (score < bestscore) {
             bestscore = score;
             sol = std::move(sol2);
@@ -391,10 +453,10 @@ vector<int> iterative_steepest_LS2(const vector<vector<int>>& distanceMatrix,
     int same_score_counter = 0;
     int prev_score = bestscore;
     for (int iters = 0; iters < 500; iters++) {
-        auto perturbed = perturb3(distanceMatrix, costs, sol, seed);
-        if (same_score_counter > 5) {
-            perturbed = perturb(distanceMatrix, costs, sol, seed);
-        }
+        auto perturbed = perturb4(distanceMatrix, costs, sol, seed * iters);
+        // if (same_score_counter > 5) {
+        //     perturbed = perturb(distanceMatrix, costs, sol, seed);
+        // }
 
         // return sol;
         auto sol2 = steepestLocalSearch(std::move(perturbed), distanceMatrix, costs);
@@ -412,7 +474,7 @@ vector<int> iterative_steepest_LS2(const vector<vector<int>>& distanceMatrix,
             sol = std::move(sol2);
         }
     }
-    cout << "same score: " << same_score_counter << endl;
-    cout<< "Improvement found: "<<a<<" times"<<endl;
+    // cout << "same score: " << same_score_counter << endl;
+    // cout << "Improvement found: " << a << " times" << endl;
     return sol;
 }
