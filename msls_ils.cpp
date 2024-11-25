@@ -86,10 +86,10 @@ vector<int> multiple_start_steepestLS(const vector<vector<int>>& distanceMatrix,
     vector<int> best;
     int bestscore = LARGE_SCORE;
     for (int iters = 0; iters < 200; iters++) {
-        auto initial = generate_random_solution_sliding_window(distanceMatrix, costs,
-                                                               seed  * iters);
+        auto initial =
+            generate_random_solution_sliding_window(distanceMatrix, costs, seed * iters);
 
-        auto sol = steepestLocalSearch(std::move(initial), distanceMatrix, costs);
+        auto sol = steepestLocalSearch(std::move(initial), distanceMatrix, costs, true);
         //
         int score = _evaluate_solution(sol, distanceMatrix, costs);
         if (score < bestscore) {
@@ -423,12 +423,13 @@ vector<int> iterative_steepest_LS(const vector<vector<int>>& distanceMatrix,
     for (int iters = 0; iters < 500; iters++) {
         auto perturbed = perturb5(distanceMatrix, costs, sol, seed * iters);
         // return sol;
-        auto sol2 = steepestLocalSearch(std::move(perturbed), distanceMatrix, costs);
+        auto sol2 =
+            steepestLocalSearch(std::move(perturbed), distanceMatrix, costs, true);
         int score = _evaluate_solution(sol2, distanceMatrix, costs);
         if (score == prev_score) {
             same_score_counter++;
-            if (same_score_counter>10){
-                cout<<"Got to " << iters << " iterations."<<endl;
+            if (same_score_counter > 10) {
+                cout << "Got to " << iters << " iterations." << endl;
                 return sol;
             }
         }
