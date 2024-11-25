@@ -24,7 +24,7 @@ vector<int> randomTSP(const vector<vector<int>>& distanceMatrix, const vector<in
     return solution;
 }
 
-static int findNearestNeighbor(const vector<vector<int>>& distanceMatrix,
+int findNearestNeighbor(const vector<vector<int>>& distanceMatrix,
                                const vector<int>& costs, int node,
                                const vector<int>& solution,
                                const vector<uint8_t>& is_in_sol)

@@ -10,6 +10,7 @@
 #include "experiment_utils.hpp"
 #include "headers.hpp"
 #include "local_search.hpp"
+#include "msls_ils.hpp"
 #include "reading.hpp"
 #include "solvers.hpp"
 
@@ -239,6 +240,68 @@ void main_local_search(const TSPInstance& inst, string_view input_file_name)
     cout << "[ok] Saved " << out_fname << endl;
 }
 
+void main_6(const TSPInstance& inst, string_view input_file_name)
+{
+    // iterative_steepest_LS(inst.distances,inst.costs,42);
+    // return;
+    using _Func =
+        std::function<vector<int>(const vector<vector<int>>&, const vector<int>&, int)>;
+    const initializer_list<pair<_Func, const char*>> LS_TYPES{
+        // {multiple_start_steepestLS, "multiple_start_LS"},
+        {iterative_steepest_LS, "iterative_LS"},
+        {iterative_steepest_LS2, "iterative_LS2"},
+    };
+    Stopwatch timer;
+    Stopwatch timer_all;
+    latextables.clear();
+
+    string_view out_fname = "data/results-6/summary.json";
+    ofstream out = openOutFile(out_fname, "", std::ios_base::app | std::ios_base::binary);
+    // out << "[\n";
+    ResultsWriter wr;
+    wr.instance = input_file_name;
+    if (input_file_name.ends_with(".csv")) {
+        wr.instance.remove_suffix(4);
+    }
+    // wr.initial = "msls";
+    SolutionStats stats;
+
+    SolutionStats local_stats;
+
+    for (auto [localsearchfunc, funcname] : LS_TYPES) {
+        wr.local_search_type = funcname;
+        for (int seed = 0; seed < 20; seed++) {
+            timer.reset();
+            auto solution = localsearchfunc(inst.distances, inst.costs, 42 + seed);
+
+            auto t = timer.count_nanos() / 1000.0;
+            auto value = inst.evaluateSolution(solution);
+            stats.track(solution, value);
+            stats.add_time(t);
+        }
+
+        cout << std::format("{{initial random\\\\ {}, }}  & {} & \n", funcname,
+                            stats.format_latex_one_field());
+        cout << std::format(
+            "Took {:.3f} s\n",
+            // sum
+            std::accumulate(stats.timings.begin(), stats.timings.end(), 0LL) / 1e6);
+        // cout << "Timing summary (\u03BCs):\n";
+        cout << "Timing summary in us:\n";
+        print_summary(describe_vec(stats.timings));
+
+        // save to different folder
+        printResults(stats.best_sol, true,
+                     std::format("{}_{}_best.txt", input_file_name, funcname),
+                     "data/results-6");
+
+        wr.scores_summary = describe_vec(stats.scores);
+        wr.timing_summary = describe_vec(stats.timings);
+        wr.print_json_to(out);
+        out << "\n";
+    }
+}
+
 }  // namespace run
 
 int main(int argc, char* argv[])
@@ -262,7 +325,8 @@ int main(int argc, char* argv[])
 
         // run::weightedExperiments(inst);
 
-        run::main_local_search(inst, input_file_name);
+        // run::main_local_search(inst, input_file_name);
+        run::main_6(inst, input_file_name);
 
         cout << "\n\n";
     }
