@@ -247,9 +247,8 @@ void main_6(const TSPInstance& inst, string_view input_file_name)
     using _Func =
         std::function<vector<int>(const vector<vector<int>>&, const vector<int>&, int)>;
     const initializer_list<pair<_Func, const char*>> LS_TYPES{
-        {multiple_start_steepestLS, "multiple_start_LS"},
-        {iterative_steepest_LS, "iterative_LS"},
-        {iterative_steepest_LS2, "iterative_LS2"},
+        {multiple_start_steepestLS, "multiplestart_steepest_LS"},
+        {iterative_steepest_LS, "iterative_steepest_LS"},
     };
     Stopwatch timer;
     Stopwatch timer_all;
@@ -272,7 +271,7 @@ void main_6(const TSPInstance& inst, string_view input_file_name)
         wr.local_search_type = funcname;
         for (int seed = 0; seed < 20; seed++) {
             timer.reset();
-            auto solution = localsearchfunc(inst.distances, inst.costs, 42 * seed);
+            auto solution = localsearchfunc(inst.distances, inst.costs, 42 * (seed+1));
 
             auto t = timer.count_nanos() / 1000.0;
             auto value = inst.evaluateSolution(solution);
