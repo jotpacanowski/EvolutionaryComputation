@@ -172,6 +172,7 @@ def main():
         inst = inst.removesuffix(".csv")
 
         sol = [int(ln) for ln in each_file.read_text().splitlines()]
+        assert(len(sol)==len(set(sol)))
         df, (node_costs, xy_points, D) = instances[inst]
         print(len(sol), "nodes")
         zc, zd = objective(D, node_costs, sol)
