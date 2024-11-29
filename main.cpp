@@ -248,7 +248,7 @@ void main_6(const TSPInstance& inst, string_view input_file_name)
     using _Func =
         std::function<vector<int>(const vector<vector<int>>&, const vector<int>&, int)>;
     const initializer_list<pair<_Func, const char*>> LS_TYPES{
-        // {multiple_start_steepestLS, "multiplestart_steepest_LS"},
+        {multiple_start_steepestLS, "multiplestart_steepest_LS"},
         {iterative_steepest_LS, "iterative_steepest_LS"},
     };
     Stopwatch timer;

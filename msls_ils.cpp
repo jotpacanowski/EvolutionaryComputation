@@ -88,52 +88,29 @@ vector<int> multiple_start_steepestLS(const vector<vector<int>>& distanceMatrix,
 {
     vector<int> best;
     int bestscore = LARGE_SCORE;
+    int improvement = 0;
+    int* ls_iterations = new int();
+    int avg_ls_iterations = 0;
     for (int iters = 0; iters < 200; iters++) {
         auto initial =
             generate_random_solution_sliding_window(distanceMatrix, costs, seed * iters);
 
-        auto sol = steepestLocalSearch(std::move(initial), distanceMatrix, costs, true);
+        auto sol = steepestLocalSearch(std::move(initial), distanceMatrix, costs, true,
+                                       ls_iterations);
         //
+        avg_ls_iterations += (*ls_iterations);
         int score = _evaluate_solution(sol, distanceMatrix, costs);
         if (score < bestscore) {
+            improvement++;
             bestscore = score;
             best = std::move(sol);
         }
     }
+    cout << "Improvement found: " << improvement << " times." << endl;
+    cout << "Iteration count: " << 200 << endl;
+    cout << "Average ls iterations: " << (double)(avg_ls_iterations) / 200.0 << endl;
 
     return best;
-}
-
-vector<int> get_slice(vector<int>& vec, int start_index, int length)
-{
-    int end_index = min((int)(start_index + length), (int)vec.size());
-    int get_from_beginning = 0;
-    if ((start_index + length) > vec.size()) {
-        get_from_beginning = (start_index + length) - vec.size();
-    }
-
-    vector<int> slice = vector<int>(vec.begin() + start_index, vec.begin() + end_index);
-    slice.insert(slice.end(), vec.begin(), vec.begin() + get_from_beginning);
-
-    return slice;
-}
-
-int get_worst_slice(const vector<vector<int>>& distanceMatrix, const vector<int>& costs,
-                    vector<int>& solution, int length)
-{
-    int best_id = 0;
-    int WORST_SCORE = 0;
-    int score;
-    for (int start_index = 0; start_index < solution.size(); start_index++) {
-        vector<int> slice = get_slice(solution, start_index, length);
-        score = _evaluate_solution(slice, distanceMatrix, costs);
-        if (score > WORST_SCORE) {
-            WORST_SCORE = score;
-            best_id = start_index;
-        }
-    }
-    // cout << "best id: " << best_id << " score: " << WORST_SCORE;
-    return best_id;
 }
 
 vector<int> get_n_nodes_not_in_sol(const vector<int>& solution, int n, int seed)
@@ -200,53 +177,74 @@ vector<int> perturb(const vector<vector<int>>& distanceMatrix, const vector<int>
     }
 
     return perturbed;
-
-    // return solution;
-    vector<int> new_chain = get_n_nodes_not_in_sol(perturbed, n, seed);
-
-    int start_index = get_worst_slice(distanceMatrix, costs, perturbed, n);
-    int end_index = min((int)perturbed.size(), start_index + (int)new_chain.size());
-
-    // change as much as we can from start to end
-    copy(new_chain.begin(), new_chain.begin() + (end_index - start_index),
-         perturbed.begin() + start_index);
-
-    // if there is anything left, continue at the beginning (it's a chain)
-    if (new_chain.size() > (end_index - start_index)) {
-        copy(new_chain.begin() + (end_index - start_index), new_chain.end(),
-             perturbed.begin());
-    }
-
-    return perturbed;
 }
 
-                                
-static inline int _evaluate_partial_path(const vector<int>& solution,
-                                         const vector<vector<int>>& D)
+vector<int> iterative_steepest_LS(const vector<vector<int>>& distanceMatrix,
+                                  const vector<int>& costs, int seed)
 {
-    int result = 0;
-    for (int i = 1; i < solution.size(); i++) {
-        int node = solution[i];
-        int prev_node = solution[i - 1];
-        result += D[prev_node][node];
-    }
-    return result;
-}
-vector<int> exhaustiveSearchTSP(const vector<vector<int>>& distanceMatrix,
-                                vector<int> vec)
-{
-    int minDistance = LARGE_SCORE;
-    vector<int> best_sol;
-
-    do {
-        int currentDistance = _evaluate_partial_path(vec, distanceMatrix);
-        if (currentDistance < minDistance) {
-            minDistance = currentDistance;
-            best_sol = vec;
+    vector<int> sol =
+        generate_random_solution_sliding_window(distanceMatrix, costs, seed + 1);
+    int bestscore = _evaluate_solution(sol, distanceMatrix, costs);
+    int improvement = 0;
+    auto now = std::chrono::steady_clock::now;
+    using namespace std::chrono_literals;
+    auto work_duration = 1336688.95us;
+    auto start = now();
+    int a = 1;
+    int* ls_iterations = new int();
+    int avg_ls_iterations = 0;
+    while ((now() - start) < work_duration) {
+        auto perturbed = perturb(distanceMatrix, costs, sol, seed * a++);
+        // return sol;
+        auto sol2 = steepestLocalSearch(std::move(perturbed), distanceMatrix, costs, true,
+                                        ls_iterations);
+        int score = _evaluate_solution(sol2, distanceMatrix, costs);
+        // cout<<*ls_iterations<<endl;
+        avg_ls_iterations += (*ls_iterations);
+        // break;
+        if (score < bestscore) {
+            improvement++;
+            bestscore = score;
+            sol = std::move(sol2);
         }
-    } while (next_permutation(vec.begin(), vec.end()));
+    }
+    cout << "Improvement found: " << improvement << " times." << endl;
+    cout << "Perturbation count: " << a << endl;
+    cout << "Average ls iterations: " << (double)(avg_ls_iterations) / (double)(a)
+         << endl;
+    return sol;
+}
 
-    return best_sol;
+vector<int> get_slice(vector<int>& vec, int start_index, int length)
+{
+    int end_index = min((int)(start_index + length), (int)vec.size());
+    int get_from_beginning = 0;
+    if ((start_index + length) > vec.size()) {
+        get_from_beginning = (start_index + length) - vec.size();
+    }
+
+    vector<int> slice = vector<int>(vec.begin() + start_index, vec.begin() + end_index);
+    slice.insert(slice.end(), vec.begin(), vec.begin() + get_from_beginning);
+
+    return slice;
+}
+
+int get_worst_slice(const vector<vector<int>>& distanceMatrix, const vector<int>& costs,
+                    vector<int>& solution, int length)
+{
+    int best_id = 0;
+    int WORST_SCORE = 0;
+    int score;
+    for (int start_index = 0; start_index < solution.size(); start_index++) {
+        vector<int> slice = get_slice(solution, start_index, length);
+        score = _evaluate_solution(slice, distanceMatrix, costs);
+        if (score > WORST_SCORE) {
+            WORST_SCORE = score;
+            best_id = start_index;
+        }
+    }
+    // cout << "best id: " << best_id << " score: " << WORST_SCORE;
+    return best_id;
 }
 
 // nn heuristic - adapted for ils
@@ -322,7 +320,6 @@ vector<int> greedyCycleLimited(vector<int> vec, const vector<vector<int>>& D,
 }
 
 // Perturbation - rearrange worst n consecutive nodes with greedy cycle heuristic
-
 vector<int> destroy_repair(const vector<vector<int>>& distanceMatrix,
                            const vector<int>& costs, vector<int>& solution, int seed)
 {
@@ -347,45 +344,4 @@ vector<int> destroy_repair(const vector<vector<int>>& distanceMatrix,
     }
 
     return perturbed;
-}
-
-bool isunique(vector<int> vec)
-{
-    set<int> uniqueElements(vec.begin(), vec.end());
-    return uniqueElements.size() == vec.size();
-}
-
-vector<int> iterative_steepest_LS(const vector<vector<int>>& distanceMatrix,
-                                  const vector<int>& costs, int seed)
-{
-    vector<int> sol =
-        generate_random_solution_sliding_window(distanceMatrix, costs, seed + 1);
-    int bestscore = _evaluate_solution(sol, distanceMatrix, costs);
-    int improvement = 0;
-    auto now = std::chrono::steady_clock::now;
-    using namespace std::chrono_literals;
-    auto work_duration = 1336688.95us;
-    auto start = now();
-    int a = 1;
-    int *ls_iterations = new int();
-    int avg_ls_iterations = 0;
-    while ((now() - start) < work_duration) {
-        auto perturbed = perturb(distanceMatrix, costs, sol, seed * a++);
-        // return sol;
-        auto sol2 =
-            steepestLocalSearch(std::move(perturbed), distanceMatrix, costs, true, ls_iterations);
-        int score = _evaluate_solution(sol2, distanceMatrix, costs);
-        // cout<<*ls_iterations<<endl;
-        avg_ls_iterations+=(*ls_iterations);
-        // break;
-        if (score < bestscore) {
-            improvement++;
-            bestscore = score;
-            sol = std::move(sol2);
-        }
-    }
-    cout << "Improvement found: " << improvement << " times." << endl;
-    cout << "Perturbation count: " << a << endl;
-    cout<< "Average ls iterations: " << (double)(avg_ls_iterations)/(double)(a)<<endl;
-    return sol;
 }
