@@ -106,9 +106,8 @@ vector<int> multiple_start_steepestLS(const vector<vector<int>>& distanceMatrix,
             best = std::move(sol);
         }
     }
-    cout << "Improvement found: " << improvement << " times." << endl;
-    cout << "Iteration count: " << 200 << endl;
-    cout << "Average ls iterations: " << (double)(avg_ls_iterations) / 200.0 << endl;
+    cout << 200 << '\t' << improvement << "\t" << (double)(avg_ls_iterations) / 200.0
+         << endl;
 
     return best;
 }
@@ -208,10 +207,9 @@ vector<int> iterative_steepest_LS(const vector<vector<int>>& distanceMatrix,
             sol = std::move(sol2);
         }
     }
-    cout << "Improvement found: " << improvement << " times." << endl;
-    cout << "Perturbation count: " << a << endl;
-    cout << "Average ls iterations: " << (double)(avg_ls_iterations) / (double)(a)
+    cout << a << '\t' << improvement << "\t" << (double)(avg_ls_iterations) / (double)(a)
          << endl;
+
     return sol;
 }
 
@@ -324,8 +322,8 @@ vector<int> destroy_repair(const vector<vector<int>>& distanceMatrix,
                            const vector<int>& costs, vector<int>& solution, int seed)
 {
     srand(seed);
-    // pick n consecutive nodes (10, 20...90)
-    int n = rand() % 5 + 1 * 10;
+    // pick n consecutive nodes (20-30)
+    int n = rand() % 10 + 20;
     vector<int> perturbed = solution;
 
     int start_index = get_worst_slice(distanceMatrix, costs, perturbed, n);
@@ -344,4 +342,73 @@ vector<int> destroy_repair(const vector<vector<int>>& distanceMatrix,
     }
 
     return perturbed;
+}
+
+vector<int> large_scale_neighbourhood_LS(const vector<vector<int>>& distanceMatrix,
+                                         const vector<int>& costs, int seed)
+{
+    vector<int> sol =
+        generate_random_solution_sliding_window(distanceMatrix, costs, seed + 1);
+    int bestscore = _evaluate_solution(sol, distanceMatrix, costs);
+    int improvement = 0;
+    auto now = std::chrono::steady_clock::now;
+    using namespace std::chrono_literals;
+    auto work_duration = 1336688.95us;
+    auto start = now();
+    int a = 1;
+    int* ls_iterations = new int();
+    int avg_ls_iterations = 0;
+    while ((now() - start) < work_duration) {
+        auto perturbed = destroy_repair(distanceMatrix, costs, sol, seed * a++);
+        // return sol;
+        auto sol2 = steepestLocalSearch(std::move(perturbed), distanceMatrix, costs, true,
+                                        ls_iterations);
+        int score = _evaluate_solution(sol2, distanceMatrix, costs);
+        // cout<<*ls_iterations<<endl;
+        avg_ls_iterations += (*ls_iterations);
+        // break;
+        if (score < bestscore) {
+            improvement++;
+            bestscore = score;
+            sol = std::move(sol2);
+        }
+    }
+    cout << a << '\t' << improvement << "\t" << (double)(avg_ls_iterations) / (double)(a)
+         << endl;
+    return sol;
+}
+
+vector<int> large_scale_neighbourhood_LS2(const vector<vector<int>>& distanceMatrix,
+                                          const vector<int>& costs, int seed)
+{
+    vector<int> sol =
+        generate_random_solution_sliding_window(distanceMatrix, costs, seed + 1);
+    int bestscore = _evaluate_solution(sol, distanceMatrix, costs);
+    int improvement = 0;
+    auto now = std::chrono::steady_clock::now;
+    using namespace std::chrono_literals;
+    auto work_duration = 1336688.95us;
+    auto start = now();
+    int a = 1;
+    int* ls_iterations = new int();
+    int avg_ls_iterations = 0;
+    while ((now() - start) < work_duration) {
+        auto perturbed = destroy_repair(distanceMatrix, costs, sol, seed * a++);
+        // return sol;
+        // auto sol2 = steepestLocalSearch(std::move(perturbed), distanceMatrix, costs,
+        // true,
+        //                                 ls_iterations);
+        int score = _evaluate_solution(perturbed, distanceMatrix, costs);
+        // cout<<*ls_iterations<<endl;
+        avg_ls_iterations += (*ls_iterations);
+        // break;
+        if (score < bestscore) {
+            improvement++;
+            bestscore = score;
+            sol = std::move(perturbed);
+        }
+    }
+    cout << a << '\t' << improvement << "\t" << (double)(avg_ls_iterations) / (double)(a)
+         << endl;
+    return sol;
 }

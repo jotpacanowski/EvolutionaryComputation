@@ -250,6 +250,8 @@ void main_6(const TSPInstance& inst, string_view input_file_name)
     const initializer_list<pair<_Func, const char*>> LS_TYPES{
         {multiple_start_steepestLS, "multiplestart_steepest_LS"},
         {iterative_steepest_LS, "iterative_steepest_LS"},
+        {large_scale_neighbourhood_LS, "largescale_steepest_LS"},
+        {large_scale_neighbourhood_LS2, "largescale2_steepest_LS"},
     };
     Stopwatch timer;
     Stopwatch timer_all;
@@ -270,9 +272,11 @@ void main_6(const TSPInstance& inst, string_view input_file_name)
 
     for (auto [localsearchfunc, funcname] : LS_TYPES) {
         wr.local_search_type = funcname;
+        cout << "Iterations \t Improved on \t  Average ls iterations" << endl;
+
         for (int seed = 0; seed < 20; seed++) {
             timer.reset();
-            auto solution = localsearchfunc(inst.distances, inst.costs, 42 * (seed+1));
+            auto solution = localsearchfunc(inst.distances, inst.costs, 42 * (seed + 1));
 
             auto t = timer.count_nanos() / 1000.0;
             auto value = inst.evaluateSolution(solution);
