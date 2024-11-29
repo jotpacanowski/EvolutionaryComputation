@@ -1,14 +1,19 @@
 #pragma once
 
+#include <utility>
+#include <vector>
+
 #include "headers.hpp"
 
 vector<int> steepestLocalSearch(vector<int> solution,
                                 const vector<vector<int>> &distanceMatrix,
-                                const vector<int> &costs, bool edges = false);
+                                const vector<int> &costs, bool edges = false,
+                                int *iterations = nullptr);
 
 vector<int> greedyLocalSearch(vector<int> solution,
                               const vector<vector<int>> &distanceMatrix,
-                              const vector<int> &costs, bool edges = false);
+                              const vector<int> &costs, bool edges = false,
+                              int *iterations = nullptr);
 
 class SteepestLocalSearchWithCandidateMoves {
    public:

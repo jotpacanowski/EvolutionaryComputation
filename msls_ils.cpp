@@ -161,21 +161,20 @@ vector<int> perturb(const vector<vector<int>>& distanceMatrix, const vector<int>
 {
     srand(seed);
     int n = rand() % 3;
-    // n = 1;
     vector<int> perturbed = solution;
 
-    // Swap k (2-5) random nodes from outside solution
+    // Swap k (3-8)  random nodes from outside solution
     if (n == 0) {
-        int k = rand() % 4 + 2;
+        int k = rand() % 6 + 3;
         vector<int> v = get_n_nodes_not_in_sol(perturbed, k, seed);
         for (auto node : v) {
             int location = rand() % solution.size();
             perturbed[location] = node;
         }
     }
-    // Swap k (2-5) random nodes from inside solution
+    // Swap k (3-8)  random nodes from inside solution
     else if (n == 1) {
-        int k = rand() % 4 + 2;
+        int k = rand() % 6 + 3;
         for (int i = 0; i < k; i++) {
             int pos1 = rand() % perturbed.size();
             int pos2 = rand() % perturbed.size();
@@ -184,9 +183,9 @@ vector<int> perturb(const vector<vector<int>>& distanceMatrix, const vector<int>
             perturbed[pos2] = temp;
         }
     }
-    // Swap k (2-5) edges inside solution
+    // Swap k (3-8) edges inside solution
     else if (n == 2) {
-        int k = rand() % 4 + 2;
+        int k = rand() % 6 + 3;
         for (int i = 0; i < k; i++) {
             int pos1 = rand() % perturbed.size();
             int pos2 = rand() % perturbed.size();
@@ -200,10 +199,6 @@ vector<int> perturb(const vector<vector<int>>& distanceMatrix, const vector<int>
         }
     }
 
-    else if (n == 3) {
-    }
-    else if (n == 4) {
-    }
     return perturbed;
 
     // return solution;
@@ -225,6 +220,7 @@ vector<int> perturb(const vector<vector<int>>& distanceMatrix, const vector<int>
     return perturbed;
 }
 
+                                
 static inline int _evaluate_partial_path(const vector<int>& solution,
                                          const vector<vector<int>>& D)
 {
@@ -368,16 +364,20 @@ vector<int> iterative_steepest_LS(const vector<vector<int>>& distanceMatrix,
     int improvement = 0;
     auto now = std::chrono::steady_clock::now;
     using namespace std::chrono_literals;
-    auto work_duration = 1163518.25us;
+    auto work_duration = 1336688.95us;
     auto start = now();
     int a = 1;
+    int *ls_iterations = new int();
+    int avg_ls_iterations = 0;
     while ((now() - start) < work_duration) {
         auto perturbed = perturb(distanceMatrix, costs, sol, seed * a++);
         // return sol;
         auto sol2 =
-            steepestLocalSearch(std::move(perturbed), distanceMatrix, costs, true);
+            steepestLocalSearch(std::move(perturbed), distanceMatrix, costs, true, ls_iterations);
         int score = _evaluate_solution(sol2, distanceMatrix, costs);
-
+        // cout<<*ls_iterations<<endl;
+        avg_ls_iterations+=(*ls_iterations);
+        // break;
         if (score < bestscore) {
             improvement++;
             bestscore = score;
@@ -386,5 +386,6 @@ vector<int> iterative_steepest_LS(const vector<vector<int>>& distanceMatrix,
     }
     cout << "Improvement found: " << improvement << " times." << endl;
     cout << "Perturbation count: " << a << endl;
+    cout<< "Average ls iterations: " << (double)(avg_ls_iterations)/(double)(a)<<endl;
     return sol;
 }

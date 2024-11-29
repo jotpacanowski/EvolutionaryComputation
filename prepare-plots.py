@@ -71,7 +71,7 @@ PLOTOUT.mkdir(exist_ok=True)
 
 DISPLAY_TITLE = {
     "iterative_LS": "Iterative Local Search",
-    "multiple_start_LS": "Multiple Start Local Search",
+    "multiplestart_LS": "Multiple Start Local Search",
 
 }
 
@@ -161,7 +161,7 @@ def main():
             inst, steepest, initial, nodesedges, baw = each_file.stem.split("_")
             if steepest=="iterative":
                 steepest = "Iterative Local Search"
-            if steepest=="multiple":
+            if steepest=="multiplestart":
                 steepest = "Multiple Start Local Search"
         except ValueError:
             print(f"\n\n  bad name: {each_file.stem.split('_')}\n\n")
@@ -207,10 +207,8 @@ def main():
         s = s.replace("res/plot", f"plots/{fname.stem}")
         print(s.strip())
 
-        print(r"\begin{verbatim}")
         print("[", end="")
         print(*sol, sep=", ", end="]\n")
-        print(r"\end{verbatim}")
         print("")
 
 

@@ -1,3 +1,4 @@
+#include <cstddef>
 #include <cstring>
 #include <fstream>
 #include <functional>
@@ -147,11 +148,11 @@ void main_local_search(const TSPInstance& inst, string_view input_file_name)
                                                                      inst.costs, 10);
 
     using _Func = std::function<vector<int>(vector<int>, const vector<vector<int>>&,
-                                            const vector<int>&, bool)>;
+                                            const vector<int>&, bool, int*)>;
     const initializer_list<pair<_Func, const char*>> LS_TYPES{
         {[&s_ls_candidate_moves](vector<int> solution,
                                  const vector<vector<int>>& distanceMatrix,
-                                 const vector<int>& costs, bool edges) {
+                                 const vector<int>& costs, bool edges, int* iterations) {
              // call member function
              return s_ls_candidate_moves.do_local_search(std::move(solution),
                                                          distanceMatrix, costs, edges);
@@ -202,7 +203,7 @@ void main_local_search(const TSPInstance& inst, string_view input_file_name)
 
                         timer.reset();
                         auto solution = localsearchfunc(initial, inst.distances,
-                                                        inst.costs, swaptype);
+                                                        inst.costs, swaptype, nullptr);
                         auto t = timer.count_nanos() / 1000.0;
                         auto value = inst.evaluateSolution(solution);
                         stats.track(solution, value);
@@ -247,7 +248,7 @@ void main_6(const TSPInstance& inst, string_view input_file_name)
     using _Func =
         std::function<vector<int>(const vector<vector<int>>&, const vector<int>&, int)>;
     const initializer_list<pair<_Func, const char*>> LS_TYPES{
-        {multiple_start_steepestLS, "multiplestart_steepest_LS"},
+        // {multiple_start_steepestLS, "multiplestart_steepest_LS"},
         {iterative_steepest_LS, "iterative_steepest_LS"},
     };
     Stopwatch timer;

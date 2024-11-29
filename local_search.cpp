@@ -103,7 +103,7 @@ int interSwapTwoNodesImpact(const vector<int> &solution, const vector<vector<int
 
 vector<int> steepestLocalSearch(vector<int> solution,
                                 const vector<vector<int>> &distanceMatrix,
-                                const vector<int> &costs, bool edges)
+                                const vector<int> &costs, bool edges, int *iterations)
 {
     const auto N = distanceMatrix.size();
     const auto solution_size = solution.size();
@@ -207,12 +207,15 @@ vector<int> steepestLocalSearch(vector<int> solution,
 #if 0
     cerr << "Did " << _iters << " iterations.\n";
 #endif
+    if (iterations != nullptr) {
+        *iterations = _iters;
+    }
     return solution;
 }
 
 vector<int> greedyLocalSearch(vector<int> solution,
                               const vector<vector<int>> &distanceMatrix,
-                              const vector<int> &costs, bool edges)
+                              const vector<int> &costs, bool edges, int *iterations)
 {
     const auto solution_size = solution.size();
     assert(solution.size() == (distanceMatrix.size() + 1) / 2);
