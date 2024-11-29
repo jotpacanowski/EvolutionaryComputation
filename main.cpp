@@ -266,11 +266,10 @@ void main_6(const TSPInstance& inst, string_view input_file_name)
         wr.instance.remove_suffix(4);
     }
     // wr.initial = "msls";
-    SolutionStats stats;
-
-    SolutionStats local_stats;
 
     for (auto [localsearchfunc, funcname] : LS_TYPES) {
+        SolutionStats stats;
+
         wr.local_search_type = funcname;
         cout << "Iterations \t Improved on \t  Average ls iterations" << endl;
 
