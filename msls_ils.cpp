@@ -183,6 +183,7 @@ vector<int> iterative_steepest_LS(const vector<vector<int>>& distanceMatrix,
 {
     vector<int> sol =
         generate_random_solution_sliding_window(distanceMatrix, costs, seed + 1);
+        sol = steepestLocalSearch(std::move(sol), distanceMatrix, costs, true);
     int bestscore = _evaluate_solution(sol, distanceMatrix, costs);
     int improvement = 0;
     auto now = std::chrono::steady_clock::now;
@@ -496,6 +497,7 @@ vector<int> large_scale_neighbourhood_LS(const vector<vector<int>>& distanceMatr
 {
     vector<int> sol =
         generate_random_solution_sliding_window(distanceMatrix, costs, seed + 1);
+        sol = steepestLocalSearch(std::move(sol), distanceMatrix, costs, true);
     int bestscore = _evaluate_solution(sol, distanceMatrix, costs);
     int improvement = 0;
     auto now = std::chrono::steady_clock::now;
@@ -532,6 +534,7 @@ vector<int> large_scale_neighbourhood_LS2(const vector<vector<int>>& distanceMat
 {
     vector<int> sol =
         generate_random_solution_sliding_window(distanceMatrix, costs, seed + 1);
+    sol = steepestLocalSearch(std::move(sol), distanceMatrix, costs,true);
     int bestscore = _evaluate_solution(sol, distanceMatrix, costs);
     int improvement = 0;
     auto now = std::chrono::steady_clock::now;
