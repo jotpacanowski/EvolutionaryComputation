@@ -244,6 +244,65 @@ int get_worst_slice(const vector<vector<int>>& distanceMatrix, const vector<int>
     // cout << "best id: " << best_id << " score: " << WORST_SCORE;
     return best_id;
 }
+int weightedRandom(const vector<pair<int, int>>& arr, int seed)
+{
+    // Step 1: Calculate the prefix sum of weights
+    vector<int> prefixSum(arr.size());
+    iota(prefixSum.begin(), prefixSum.end(), 1);  // Weights are 1, 2, 3, ..., n
+    for (size_t i = 1; i < prefixSum.size(); ++i) {
+        if (arr[i].first == 0) {
+            prefixSum[i] = 0;
+            continue;
+        }
+        prefixSum[i] += prefixSum[i - 1];
+    }
+
+    // Step 2: Generate a random number in the range [1, total weight]
+    int totalWeight = prefixSum.back();
+    mt19937 gen(seed);  // Mersenne Twister RNG
+    uniform_int_distribution<> dis(1, totalWeight);
+    int randomValue = dis(gen);
+
+    // Step 3: Find the index corresponding to the random value
+    auto it = lower_bound(prefixSum.begin(), prefixSum.end(), randomValue);
+    return distance(prefixSum.begin(), it);  // Convert iterator to index
+}
+
+int get_worst_slice_randomized(const vector<vector<int>>& distanceMatrix,
+                               const vector<int>& costs, vector<int>& solution,
+                               int length, vector<int> taken_indices, int seed)
+{
+    int score;
+    vector<pair<int, int>> all_scores;
+    for (int start_index = 0; start_index < solution.size(); start_index++) {
+        if (taken_indices.size() > 0) {
+            if (std::find(taken_indices.begin(), taken_indices.end(), start_index)
+                != taken_indices.end()) {
+                score = 0;
+            }
+            else {
+                vector<int> slice = get_slice(solution, start_index, length);
+                score = _evaluate_solution(slice, distanceMatrix, costs);
+            }
+        }
+        else {
+            vector<int> slice = get_slice(solution, start_index, length);
+            score = _evaluate_solution(slice, distanceMatrix, costs);
+        }
+        pair<int, int> p = {score, start_index};
+        all_scores.push_back(p);
+    }
+    sort(all_scores.begin(), all_scores.end(),
+         [](const pair<int, int>& a, const pair<int, int>& b) {
+             return a.first < b.first;
+         });
+    // for (const auto& p : all_scores) {
+    //     std::cout << "Score: " << p.first << ", Index: " << p.second << '\n';
+    // }
+    int index = weightedRandom(all_scores, seed);
+    // cout << "index " << index << endl;
+    return all_scores[index].second;
+}
 
 // nn heuristic - adapted for ils
 vector<int> greedyPath(vector<int>& vec, const vector<vector<int>>& D,
@@ -326,9 +385,13 @@ vector<int> destroy_repair(const vector<vector<int>>& distanceMatrix,
     int n = rand() % 10 + 20;
     vector<int> perturbed = solution;
 
+    // Destroy - find worst slice
+    // TODO: multiple slices, different sizes, non deterministic
     int start_index = get_worst_slice(distanceMatrix, costs, perturbed, n);
     vector<int> new_chain = get_slice(perturbed, start_index, n);
-    new_chain = greedyPath(new_chain, distanceMatrix, costs);
+
+    // Repair - simple greedy path
+    new_chain = greedyCycleLimited(new_chain, distanceMatrix, costs);
     int end_index = min((int)perturbed.size(), start_index + (int)new_chain.size());
 
     // change as much as we can from start to end
@@ -344,6 +407,90 @@ vector<int> destroy_repair(const vector<vector<int>>& distanceMatrix,
     return perturbed;
 }
 
+// Perturbation - rearrange n consecutive nodes with greedy cycle heuristic
+// Nodes are chosen with roulette wheel choice with n-th worst chain being n-times as
+// likely Weights = (best chain=1, 2nd best=2, nth best=n)
+vector<int> destroy_repair_non_deterministic(const vector<vector<int>>& distanceMatrix,
+                                             const vector<int>& costs,
+                                             vector<int>& solution, int seed)
+{
+    srand(seed);
+    // pick n consecutive nodes (20-30)
+    int n = rand() % 10 + 20;
+    vector<int> perturbed = solution;
+    vector<int> taken = {};
+
+    // Destroy - find worst slice
+    // TODO: multiple slices, different sizes, non deterministic
+    int start_index = get_worst_slice(distanceMatrix, costs, perturbed, n);
+    // cout << "START INDEX: " << start_index << endl;
+    // return solution;
+    vector<int> new_chain = get_slice(perturbed, start_index, n);
+
+    // Repair - simple greedy path
+    new_chain = greedyCycleLimited(new_chain, distanceMatrix, costs);
+    int end_index = min((int)perturbed.size(), start_index + (int)new_chain.size());
+
+    // change as much as we can from start to end
+    copy(new_chain.begin(), new_chain.begin() + (end_index - start_index),
+         perturbed.begin() + start_index);
+
+    // if there is anything left, continue at the beginning (it's a chain)
+    if (new_chain.size() > (end_index - start_index)) {
+        copy(new_chain.begin() + (end_index - start_index), new_chain.end(),
+             perturbed.begin());
+    }
+
+    return perturbed;
+}
+
+vector<int> destroy_repair_non_deterministic_multiple_chains(
+    const vector<vector<int>>& distanceMatrix, const vector<int>& costs,
+    vector<int>& solution, int seed)
+{
+    srand(seed);
+
+    vector<int> perturbed = solution;
+    vector<int> taken;
+    // Total nodes changed - 10-40
+    // Random number of chains, 2-4
+    int k = rand() % 3 + 2;
+    for (int i = 0; i < k; i++) {
+        // Random length of chain, 5-10
+        int n = rand() % 6 + 5;
+        int start_index =
+            get_worst_slice_randomized(distanceMatrix, costs, perturbed, n, taken, seed*i);
+        // cout << "START INDEX: " << start_index << endl;
+        // return solution;
+        for (int j = -n; j < n; j++) {
+            int idx = (start_index + j);
+            if (idx < 0) {
+                idx = solution.size() + idx;
+            }
+            if (idx > solution.size()) {
+                idx = idx % solution.size();
+            }
+            taken.push_back(idx);
+        }
+        vector<int> new_chain = get_slice(perturbed, start_index, n);
+
+        // Repair - simple greedy path
+        new_chain = greedyCycleLimited(new_chain, distanceMatrix, costs);
+        int end_index = min((int)perturbed.size(), start_index + (int)new_chain.size());
+
+        // change as much as we can from start to end
+        copy(new_chain.begin(), new_chain.begin() + (end_index - start_index),
+             perturbed.begin() + start_index);
+
+        // if there is anything left, continue at the beginning (it's a chain)
+        if (new_chain.size() > (end_index - start_index)) {
+            copy(new_chain.begin() + (end_index - start_index), new_chain.end(),
+                 perturbed.begin());
+        }
+    }
+
+    return perturbed;
+}
 vector<int> large_scale_neighbourhood_LS(const vector<vector<int>>& distanceMatrix,
                                          const vector<int>& costs, int seed)
 {
@@ -359,7 +506,9 @@ vector<int> large_scale_neighbourhood_LS(const vector<vector<int>>& distanceMatr
     int* ls_iterations = new int();
     int avg_ls_iterations = 0;
     while ((now() - start) < work_duration) {
-        auto perturbed = destroy_repair(distanceMatrix, costs, sol, seed * a++);
+        auto perturbed = destroy_repair_non_deterministic_multiple_chains(
+            distanceMatrix, costs, sol, seed * a++);
+        // return sol;
         // return sol;
         auto sol2 = steepestLocalSearch(std::move(perturbed), distanceMatrix, costs, true,
                                         ls_iterations);
@@ -393,19 +542,20 @@ vector<int> large_scale_neighbourhood_LS2(const vector<vector<int>>& distanceMat
     int* ls_iterations = new int();
     int avg_ls_iterations = 0;
     while ((now() - start) < work_duration) {
-        auto perturbed = destroy_repair(distanceMatrix, costs, sol, seed * a++);
+        auto sol2 =
+            destroy_repair_non_deterministic_multiple_chains(distanceMatrix, costs, sol, seed * a++);
         // return sol;
-        // auto sol2 = steepestLocalSearch(std::move(perturbed), distanceMatrix, costs,
-        // true,
-        //                                 ls_iterations);
-        int score = _evaluate_solution(perturbed, distanceMatrix, costs);
+        // return sol;
+        // auto sol2 = steepestLocalSearch(std::move(perturbed), distanceMatrix, costs, true,
+                                        // ls_iterations);
+        int score = _evaluate_solution(sol2, distanceMatrix, costs);
         // cout<<*ls_iterations<<endl;
         avg_ls_iterations += (*ls_iterations);
         // break;
         if (score < bestscore) {
             improvement++;
             bestscore = score;
-            sol = std::move(perturbed);
+            sol = std::move(sol2);
         }
     }
     cout << a << '\t' << improvement << "\t" << (double)(avg_ls_iterations) / (double)(a)
