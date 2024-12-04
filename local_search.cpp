@@ -18,8 +18,8 @@
 #include "local_search_helpers_inc.hpp"
 
 // Intra-route move: swap two nodes within solution
-int intraSwapTwoNodesImpact(const vector<int> &solution, const vector<vector<int>> &D,
-                            int id1, int id2)
+constexpr int intraSwapTwoNodesImpact(const vector<int> &solution,
+                                      const vector<vector<int>> &D, int id1, int id2)
 {
     int node1 = solution[id1];
     int node2 = solution[id2];
@@ -60,8 +60,8 @@ int intraSwapTwoNodesImpact(const vector<int> &solution, const vector<vector<int
 }
 
 // Intra-route move: swap two edges within solution
-int intraSwapTwoEdgesImpact(const vector<int> &solution, const vector<vector<int>> &D,
-                            int id1, int id2)
+constexpr int intraSwapTwoEdgesImpact(const vector<int> &solution,
+                                      const vector<vector<int>> &D, int id1, int id2)
 {
     if (id1 > id2) {
         swap(id1, id2);
@@ -82,8 +82,10 @@ int intraSwapTwoEdgesImpact(const vector<int> &solution, const vector<vector<int
 
 // Inter-route move:
 // Exchange internal node with an external (i.e. outside the solution) node
-int interSwapTwoNodesImpact(const vector<int> &solution, const vector<vector<int>> &D,
-                            const vector<int> &costs, int idx, int external_node)
+constexpr int interSwapTwoNodesImpact(const vector<int> &solution,
+                                      const vector<vector<int>> &D,
+                                      const vector<int> &costs, int idx,
+                                      int external_node)
 {
     int internal_node = solution[idx];
 
