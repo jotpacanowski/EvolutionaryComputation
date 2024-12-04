@@ -118,6 +118,7 @@ void weightedExperiments(const TSPInstance& inst)
 // note: std::array<> does not deduce its length here
 const initializer_list<pair<TSPSolverStarting*, const char*>> GREEDY_SOLVERS{
     {randomTSP, "random"},
+    // {generate_random_solution_sliding_window, "random-v2"},
     {nearestNeighborTSP, "NN-end"},
     {nearestNeighborAnyTSP, "NN-any"},
     {greedyCycleTSP, "greedyCycle"},
@@ -305,6 +306,105 @@ void main_6(const TSPInstance& inst, string_view input_file_name)
     }
 }
 
+void main_5_LS_LM(const TSPInstance& inst, string_view input_file_name)
+{
+    // Prepare lookup tables for nearest neighbors
+    const SteepestLocalSearchWithCandidateMoves s_ls_candidate_moves(inst.distances,
+                                                                     inst.costs, 10);
+
+    using _Func = std::function<vector<int>(vector<int>, const vector<vector<int>>&,
+                                            const vector<int>&, bool, int*)>;
+    const initializer_list<pair<_Func, const char*>> LS_TYPES{
+        {steepest_LS_LM, "MovesList-St"},
+        {[&s_ls_candidate_moves](vector<int> solution,
+                                 const vector<vector<int>>& distanceMatrix,
+                                 const vector<int>& costs, bool edges, int* iters) {
+             // call member function
+             return s_ls_candidate_moves.do_local_search(std::move(solution),
+                                                         distanceMatrix, costs, edges);
+         },
+         "St-LS-candidates"},
+        {steepestLocalSearch, "steepest"},
+    };
+    // const initializer_list<pair<bool, const char*>> INTRA_SWAP_TYPES{
+    // {false, "nodes"},
+
+    Stopwatch timer;
+    Stopwatch timer_all;
+    latextables.clear();
+
+    string_view out_fname = "data/results-LS/summary.json";
+    ofstream out = openOutFile(out_fname, "", std::ios_base::app | std::ios_base::binary);
+    // out << "[\n";
+    ResultsWriter wr;
+    wr.instance = input_file_name;
+    if (input_file_name.ends_with(".csv")) {
+        wr.instance.remove_suffix(4);
+    }
+
+    auto swaptype = true;
+    auto movename = "edges";
+    wr.intra_route_swap = movename;
+
+    for (auto [localsearchfunc, funcname] : LS_TYPES) {
+        wr.local_search_type = funcname;
+        for (int _is_random = 0; _is_random < 2; _is_random++) {
+            bool random = (_is_random == 0);
+            SolutionStats stats;
+            for (auto [initsolver, initname] : GREEDY_SOLVERS) {
+                if (strncmp(initname, "random", 6) == 0) {
+                    if (!random) continue;
+                }
+                else if (random || strcmp(initname, "w-regret") != 0) {
+                    continue;
+                }
+
+                wr.initial = initname;
+
+                SolutionStats local_stats;
+
+                for (int starting = 0; starting < 200; starting++) {
+                    const auto initial = initsolver(inst.distances, inst.costs, starting);
+
+                    timer.reset();
+                    int iters;
+                    auto solution = localsearchfunc(initial, inst.distances, inst.costs,
+                                                    swaptype, &iters);
+                    auto t = timer.count_nanos() / 1000.0;
+                    auto value = inst.evaluateSolution(solution);
+                    stats.track(solution, value);
+                    stats.add_time(t);
+                }
+                cout << std::format("{{initial {}\\\\ {} LS, {}}}  & {} & \n", initname,
+                                    funcname, movename, stats.format_latex_one_field());
+                cout << std::format(
+                    "Took {:.3f} s\n",
+                    // sum
+                    std::accumulate(stats.timings.begin(), stats.timings.end(), 0LL)
+                        / 1e6);
+                // cout << "Timing summary (\u03BCs):\n";
+                cout << "Timing summary in us:\n";
+                print_summary(describe_vec(stats.timings));
+
+                // save to different folder
+                printResults(stats.best_sol, true,
+                             std::format("{}_{}_{}_{}_best.txt", input_file_name,
+                                         funcname, initname, movename),
+                             "data/results-LS");
+
+                wr.scores_summary = describe_vec(stats.scores);
+                wr.timing_summary = describe_vec(stats.timings);
+                wr.print_json_to(out);
+                out << "\n";
+            }
+        }
+    }
+
+    cout << std::format("Everything took {}\n", timer_all.pretty_print());
+
+    cout << "[ok] Saved " << out_fname << endl;
+}
+
 }  // namespace run
 
 int main(int argc, char* argv[])
@@ -329,7 +429,10 @@ int main(int argc, char* argv[])
         // run::weightedExperiments(inst);
 
         // run::main_local_search(inst, input_file_name);
-        run::main_6(inst, input_file_name);
+
+        run::main_5_LS_LM(inst, input_file_name);
+
+        // run::main_6(inst, input_file_name);
 
         cout << "\n\n";
     }

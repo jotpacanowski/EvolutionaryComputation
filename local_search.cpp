@@ -608,7 +608,7 @@ struct CustomMoveHash {
 
 vector<int> steepest_LS_LM(vector<int> solution,
                            const vector<vector<int>> &distanceMatrix,
-                           const vector<int> &costs, bool edges)
+                           const vector<int> &costs, bool edges, int *iterations)
 {
     assert(edges);
     const auto N = distanceMatrix.size();
