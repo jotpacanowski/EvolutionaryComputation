@@ -612,12 +612,9 @@ constexpr static inline void try_edge_swap(int i1, int i2, const vector<int> &so
                                            const vector<vector<int>> &distanceMatrix,
                                            auto &improving_moves_list)
 {
-    if (i1 == i2) return;  // invalid
-    if (i2 > i1) swap(i1, i2);
     // assert(i2 < i1);
-    if (i2 == 0 && i1 == solution.size() - 1)
-        return;  // skip (0,99) - considering single edge
     int delta = intraSwapTwoEdgesImpact(solution, distanceMatrix, i1, i2);
+    if (delta > 0) return;
 
     LSMove currentmove = {.score_delta = delta,
                           .is_edge_swap = true,
@@ -637,11 +634,14 @@ constexpr static inline void try_internal_external(
     const vector<vector<int>> &distanceMatrix, const vector<int> &costs,
     auto &improving_moves_list)
 {
-    assert(findIndex(solution, internal) >= 0);
-    assert(findIndex(solution, external) < 0);
+    // uncomment for debugging only:
+    // assert(findIndex(solution, internal) >= 0);
+    // assert(findIndex(solution, external) < 0);
     // int idx = findIndex(solution, internal);
     // int idx = node_id_to_solution[internal];
     int delta = interSwapTwoNodesImpact(solution, distanceMatrix, costs, idx, external);
+    if (delta > 0) return;
+
     LSMove currentmove = {.score_delta = delta,
                           .is_edge_swap = false,
                           .pos1 = internal,
@@ -925,6 +925,10 @@ vector<int> steepest_LS_LM(vector<int> solution,
                     // for (int i2_id : affected_node_ids) {
                     //     int i2 = node_id_to_solution[i2_id];  // TODO: and neighbors
                     // try_edge_swap(i1, i2);
+                    if (i1 == i2) continue;  // invalid
+                    if (i2 > i1) swap(i1, i2);
+                    if (i2 == 0 && i1 == solution.size() - 1)
+                        continue;  // skip (0,99) - considering single edge
                     try_edge_swap(i1, i2, solution, distanceMatrix, improving_moves_list);
                 }
             }
