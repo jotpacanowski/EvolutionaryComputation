@@ -606,8 +606,6 @@ struct CustomMoveHash {
     }
 };
 
-#include "msls_ils.hpp"
-
 constexpr static inline void try_edge_swap(int i1, int i2, const vector<int> &solution,
                                            const vector<vector<int>> &distanceMatrix,
                                            auto &improving_moves_list)
@@ -716,7 +714,7 @@ vector<int> steepest_LS_LM(vector<int> solution,
                     }
                     if (delta < lowest_delta) {
                         found = true;
-                        best_move = currentmove;
+                        // best_move = currentmove;
                         lowest_delta = delta;
                     }
                 }
@@ -743,7 +741,7 @@ vector<int> steepest_LS_LM(vector<int> solution,
                     }
                     if (delta < lowest_delta) {
                         found = true;
-                        best_move = currentmove;
+                        // best_move = currentmove;
                         lowest_delta = delta;
                     }
                 }
@@ -752,7 +750,7 @@ vector<int> steepest_LS_LM(vector<int> solution,
 
         std::sort(improving_moves_list.begin(), improving_moves_list.end());
 
-        if (found) {
+        if (false && found) {  // debugging
             // assert(found && improving_moves_list.front() == best_move);
             auto _i = std::find(improving_moves_list.begin(), improving_moves_list.end(),
                                 best_move);
@@ -763,8 +761,13 @@ vector<int> steepest_LS_LM(vector<int> solution,
             }
         }
     }
+    if (found == false) {
+        if (iterations != nullptr) *iterations = 0;
 
-    // best_move = improving_moves_list.front();
+        return solution;
+    }
+
+    best_move = improving_moves_list.front();
     assert(best_move.score_delta == improving_moves_list[0].score_delta);
     best_move = improving_moves_list[0];
 
@@ -864,7 +867,7 @@ vector<int> steepest_LS_LM(vector<int> solution,
             bool keep = true;
             if (move.is_edge_swap == false) {
                 auto internal = move.pos1;
-                auto external = move.pos2;
+                // auto external = move.pos2;
 
                 auto ii = node_id_to_solution[internal];
                 if (ii < 0) keep = false;
@@ -946,18 +949,23 @@ vector<int> steepest_LS_LM(vector<int> solution,
             }
         }
 
-        // std::sort(improving_moves_list.begin(), improving_moves_list.end());
-        // best_move = improving_moves_list.front();
-        // if (lowest_delta != best_move.score_delta) {
-        //     lowest_delta = best_move.score_delta;
-        // }
         found = false;
         best_move.score_delta = 0;
         lowest_delta = 0;
         // 2.4 Find best_move for current solution
 
-        // std::sort(improving_moves_list.begin(), improving_moves_list.end());
         // Sorting slows down when initial solution is random
+        std::sort(improving_moves_list.begin(), improving_moves_list.end());
+        // auto sbef = improving_moves_list.size();
+        // auto _new_end =
+        //     std::unique(improving_moves_list.begin(), improving_moves_list.end());
+        // auto saft = improving_moves_list.size();
+        // if (saft != sbef) {
+        //     cout << "[warn] redundant moves found " << saft << " - " << sbef << " \n";
+        // }
+        // best_move = improving_moves_list.front();
+        // if (lowest_delta != best_move.score_delta)
+        //     lowest_delta = best_move.score_delta;
 
         for (auto move : improving_moves_list) {
             // check if move is valid
@@ -1036,5 +1044,8 @@ vector<int> steepest_LS_LM(vector<int> solution,
         }
     } while (found);
 
+    if (iterations != nullptr) {
+        *iterations = _iters;
+    }
     return solution;
 }
