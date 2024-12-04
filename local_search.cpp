@@ -873,23 +873,26 @@ vector<int> steepest_LS_LM(vector<int> solution,
         // for (auto move : improving_moves_list) {
         // for (auto it = improving_moves_list.begin(); it != improving_moves_list.end();
         // ++it) {
-        for (auto moveidx = 0; moveidx < improving_moves_list.size(); ++moveidx) {
+        // for (auto moveidx = 0; moveidx < improving_moves_list.size(); ++moveidx) {
+        for (auto moveidx = 0; moveidx < improving_moves_list.size();) {
             auto move = improving_moves_list[moveidx];
+            bool keep = true;
             if (move.is_edge_swap == false) {
                 auto internal = move.pos1;
                 auto external = move.pos2;
 
                 auto ii = node_id_to_solution[internal];
                 if (ii < 0) {
-                    // moves_to_remove[moveidx] = 1;
-                    moves_to_remove.insert(move);
+                    // moves_to_remove.insert(move);
+                    keep = false;
                 }
 
                 auto i_bef = cycleIndexBefore(solution, ii);
                 auto i_aft = cycleIndexAfter(solution, ii);
 
                 if (solution[i_bef] != move.before_a || solution[i_aft] != move.after_a) {
-                    moves_to_remove.insert(move);
+                    // moves_to_remove.insert(move);
+                    keep = false;
                 }
 
                 // removed: before_a -- internal -- after_b
@@ -903,11 +906,12 @@ vector<int> steepest_LS_LM(vector<int> solution,
                 auto i_pa = node_id_to_solution[pa];
                 auto i_a = node_id_to_solution[a];
                 if (i_pa < 0 || i_a < 0) {  // removed from solution
-                    // moves_to_remove[moveidx] = 1;
-                    moves_to_remove.insert(move);
+                    // moves_to_remove.insert(move);
+                    keep = false;
                 }
                 if (i_a - i_pa != 1 || (i_a != 0 && i_pa != solution_size - 1)) {
-                    moves_to_remove.insert(move);
+                    // moves_to_remove.insert(move);
+                    keep = false;
                 }
 
                 // edge 2
@@ -918,19 +922,30 @@ vector<int> steepest_LS_LM(vector<int> solution,
                 auto i_ab = node_id_to_solution[ab];
                 auto i_b = node_id_to_solution[b];
                 if (i_ab < 0 || i_b < 0) {  // removed from solution
-                    // moves_to_remove[moveidx] = 1;
-                    moves_to_remove.insert(move);
+                    // moves_to_remove.insert(move);
+                    keep = false;
                 }
                 if (i_ab - i_b != 1 || (i_ab != 0 && i_b != solution_size - 1)) {
-                    moves_to_remove.insert(move);
+                    // moves_to_remove.insert(move);
+                    keep = false;
                 }
             }
-        }
-        auto _end =
-            std::remove_if(improving_moves_list.begin(), improving_moves_list.end(),
-                           [&](auto value) { return moves_to_remove.contains(value); }
 
-            );
+            if (keep) {
+                ++moveidx;
+            }
+            else {
+                // dont incr moveidx
+                if (moveidx < improving_moves_list.size() - 1)
+                    swap(improving_moves_list[moveidx],
+                         improving_moves_list[improving_moves_list.size() - 1]);
+                improving_moves_list.erase(improving_moves_list.end() - 1);
+            }
+        }
+        // auto _end =
+        //     std::remove_if(improving_moves_list.begin(), improving_moves_list.end(),
+        //                    [&](auto value) { return moves_to_remove.contains(value); }
+        //     );
 
         {  // Do intra moves
             // for (int i1 = 0; i1 < solution_size; i1++) {
