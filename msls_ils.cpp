@@ -106,8 +106,8 @@ vector<int> multiple_start_steepestLS(const vector<vector<int>>& distanceMatrix,
             best = std::move(sol);
         }
     }
-    cout << 200 << '\t' << improvement << "\t" << (double)(avg_ls_iterations) / 200.0
-         << endl;
+    cout << 200 << "\t& " << improvement << "\t& " << (double)(avg_ls_iterations) / 200.0
+         << "\\\\ \\hline" << endl;
 
     return best;
 }
@@ -183,7 +183,7 @@ vector<int> iterative_steepest_LS(const vector<vector<int>>& distanceMatrix,
 {
     vector<int> sol =
         generate_random_solution_sliding_window(distanceMatrix, costs, seed + 1);
-        sol = steepestLocalSearch(std::move(sol), distanceMatrix, costs, true);
+    sol = steepestLocalSearch(std::move(sol), distanceMatrix, costs, true);
     int bestscore = _evaluate_solution(sol, distanceMatrix, costs);
     int improvement = 0;
     auto now = std::chrono::steady_clock::now;
@@ -208,8 +208,9 @@ vector<int> iterative_steepest_LS(const vector<vector<int>>& distanceMatrix,
             sol = std::move(sol2);
         }
     }
-    cout << a << '\t' << improvement << "\t" << (double)(avg_ls_iterations) / (double)(a)
-         << endl;
+
+    cout << a << "\t& " << improvement << "\t& "
+         << (double)(avg_ls_iterations) / (double)(a) << "\\\\ \\hline" << endl;
 
     return sol;
 }
@@ -456,11 +457,11 @@ vector<int> destroy_repair_non_deterministic_multiple_chains(
     // Total nodes changed - 10-40
     // Random number of chains, 2-4
     int k = rand() % 3 + 2;
+    // Random length of chain, 5-10
+    int n = rand() % 6 + 5;
     for (int i = 0; i < k; i++) {
-        // Random length of chain, 5-10
-        int n = rand() % 6 + 5;
-        int start_index =
-            get_worst_slice_randomized(distanceMatrix, costs, perturbed, n, taken, seed*i);
+        int start_index = get_worst_slice_randomized(distanceMatrix, costs, perturbed, n,
+                                                     taken, seed * i);
         // cout << "START INDEX: " << start_index << endl;
         // return solution;
         for (int j = -n; j < n; j++) {
@@ -497,7 +498,7 @@ vector<int> large_scale_neighbourhood_LS(const vector<vector<int>>& distanceMatr
 {
     vector<int> sol =
         generate_random_solution_sliding_window(distanceMatrix, costs, seed + 1);
-        sol = steepestLocalSearch(std::move(sol), distanceMatrix, costs, true);
+    sol = steepestLocalSearch(std::move(sol), distanceMatrix, costs, true);
     int bestscore = _evaluate_solution(sol, distanceMatrix, costs);
     int improvement = 0;
     auto now = std::chrono::steady_clock::now;
@@ -524,8 +525,9 @@ vector<int> large_scale_neighbourhood_LS(const vector<vector<int>>& distanceMatr
             sol = std::move(sol2);
         }
     }
-    cout << a << '\t' << improvement << "\t" << (double)(avg_ls_iterations) / (double)(a)
-         << endl;
+    cout << a << "\t& " << improvement << "\t& "
+         << (double)(avg_ls_iterations) / (double)(a) << "\\\\ \\hline" << endl;
+
     return sol;
 }
 
@@ -534,7 +536,7 @@ vector<int> large_scale_neighbourhood_LS2(const vector<vector<int>>& distanceMat
 {
     vector<int> sol =
         generate_random_solution_sliding_window(distanceMatrix, costs, seed + 1);
-    sol = steepestLocalSearch(std::move(sol), distanceMatrix, costs,true);
+    sol = steepestLocalSearch(std::move(sol), distanceMatrix, costs, true);
     int bestscore = _evaluate_solution(sol, distanceMatrix, costs);
     int improvement = 0;
     auto now = std::chrono::steady_clock::now;
@@ -545,12 +547,10 @@ vector<int> large_scale_neighbourhood_LS2(const vector<vector<int>>& distanceMat
     int* ls_iterations = new int();
     int avg_ls_iterations = 0;
     while ((now() - start) < work_duration) {
-        auto sol2 =
-            destroy_repair_non_deterministic_multiple_chains(distanceMatrix, costs, sol, seed * a++);
-        // return sol;
-        // return sol;
-        // auto sol2 = steepestLocalSearch(std::move(perturbed), distanceMatrix, costs, true,
-                                        // ls_iterations);
+        auto sol2 = destroy_repair_non_deterministic_multiple_chains(
+            distanceMatrix, costs, sol, seed * a++);
+        // auto sol2 = steepestLocalSearch(std::move(perturbed), distanceMatrix, costs,
+        // true, ls_iterations);
         int score = _evaluate_solution(sol2, distanceMatrix, costs);
         // cout<<*ls_iterations<<endl;
         avg_ls_iterations += (*ls_iterations);
@@ -561,7 +561,8 @@ vector<int> large_scale_neighbourhood_LS2(const vector<vector<int>>& distanceMat
             sol = std::move(sol2);
         }
     }
-    cout << a << '\t' << improvement << "\t" << (double)(avg_ls_iterations) / (double)(a)
-         << endl;
+    cout << a << "\t& " << improvement << "\t& "
+         << (double)(avg_ls_iterations) / (double)(a) << "\\\\ \\hline" << endl;
+
     return sol;
 }

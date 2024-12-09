@@ -66,13 +66,14 @@ results = list(Path("data/results-6/").rglob("*.txt"))
 # %%
 
 # PLOTOUT = Path("data/plots/")
-PLOTOUT = Path("data/plots-6/")
+PLOTOUT = Path("data/plots-ls-variations/")
 PLOTOUT.mkdir(exist_ok=True)
 
 DISPLAY_TITLE = {
     "iterative_LS": "Iterative Local Search",
     "multiplestart_LS": "Multiple Start Local Search",
-
+    "largescale": "Large Neighbourhood Local Search",
+    "largescale2": "Large Neighbourhood Search (no LS)",
 }
 
 # %%
@@ -159,10 +160,14 @@ def main():
         try:
             # inst, method, baw = each_file.stem.split("_")
             inst, steepest, initial, nodesedges, baw = each_file.stem.split("_")
-            if steepest=="iterative":
+            if steepest == "iterative":
                 steepest = "Iterative Local Search"
-            if steepest=="multiplestart":
+            if steepest == "multiplestart":
                 steepest = "Multiple Start Local Search"
+            if steepest == "largescale":
+                steepest = "Large Neighbourhood Local Search"
+            if steepest == "largescale2":
+                steepest = "Large Neighbourhood Search (no LS)"
         except ValueError:
             print(f"\n\n  bad name: {each_file.stem.split('_')}\n\n")
             # break
@@ -172,7 +177,7 @@ def main():
         inst = inst.removesuffix(".csv")
 
         sol = [int(ln) for ln in each_file.read_text().splitlines()]
-        assert(len(sol)==len(set(sol)))
+        assert len(sol) == len(set(sol))
         df, (node_costs, xy_points, D) = instances[inst]
         print(len(sol), "nodes")
         zc, zd = objective(D, node_costs, sol)
@@ -204,7 +209,7 @@ def main():
 """
         # % \caption{Instance ``A''}
         # % \label{fig:instanceA}
-        s = s.replace("res/plot", f"plots/{fname.stem}")
+        s = s.replace("res/plot", f"plots-ls-variations/{fname.stem}")
         print(s.strip())
 
         print("[", end="")
