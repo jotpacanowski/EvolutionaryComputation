@@ -8,6 +8,7 @@
 #include <utility>
 #include <vector>
 
+#include "convexity.hpp"
 #include "experiment_utils.hpp"
 #include "headers.hpp"
 #include "local_search.hpp"
@@ -241,7 +242,7 @@ void main_local_search(const TSPInstance& inst, string_view input_file_name)
     cout << "[ok] Saved " << out_fname << endl;
 }
 
-void main_6(const TSPInstance& inst, string_view input_file_name)
+void main_local_search_variants(const TSPInstance& inst, string_view input_file_name)
 {
     using _Func =
         std::function<vector<int>(const vector<vector<int>>&, const vector<int>&, int)>;
@@ -327,8 +328,11 @@ int main(int argc, char* argv[])
         // run::weightedExperiments(inst);
 
         // run::main_local_search(inst, input_file_name);
-        run::main_6(inst, input_file_name);
+        // run::main_local_search_variants(inst, input_file_name);
 
+        vector<int> best_sol = iterative_steepest_LS(inst.distances,inst.costs,42);
+        cout<<"BEST SCORE "<<inst.evaluateSolution(best_sol)<<endl;
+        task8(inst.distances, inst.costs, best_sol, input_file_name);
         cout << "\n\n";
     }
     return 0;
