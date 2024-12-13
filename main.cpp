@@ -243,8 +243,6 @@ void main_local_search(const TSPInstance& inst, string_view input_file_name)
 
 void main_6(const TSPInstance& inst, string_view input_file_name)
 {
-    // iterative_steepest_LS(inst.distances,inst.costs,42);
-    // return;
     using _Func =
         std::function<vector<int>(const vector<vector<int>>&, const vector<int>&, int)>;
     const initializer_list<pair<_Func, const char*>> LS_TYPES{
