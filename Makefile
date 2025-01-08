@@ -9,7 +9,7 @@ override CXXFLAGS := -std=c++20 ${CXXFLAGS}
 
 TARGET = main
 BUILD_DIR = build
-SRCS := main.cpp solvers.cpp local_search.cpp msls_ils.cpp convexity.cpp
+SRCS := main.cpp solvers.cpp local_search.cpp msls_ils.cpp convexity.cpp evolutionary.cpp
 OBJS := $(SRCS:%.cpp=$(BUILD_DIR)/%.cpp.o)
 DEPS := $(OBJS:.cpp.o=.cpp.d)
 

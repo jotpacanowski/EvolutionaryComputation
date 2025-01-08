@@ -2,6 +2,9 @@
 
 #include "headers.hpp"
 
+vector<int> greedyCycleRepair(vector<int> vec, const vector<vector<int>>& D,
+                              const vector<int>& C, int desired_length);
+
 vector<int> generate_random_solution_sliding_window(const vector<vector<int>>& D,
                                                     const vector<int>& C, int seed);
 

@@ -9,6 +9,7 @@
 #include <vector>
 
 #include "convexity.hpp"
+#include "evolutionary.hpp"
 #include "experiment_utils.hpp"
 #include "headers.hpp"
 #include "local_search.hpp"
@@ -304,6 +305,65 @@ void main_local_search_variants(const TSPInstance& inst, string_view input_file_
     }
 }
 
+void task9(const TSPInstance& inst, string_view input_file_name)
+{
+    // using _Func =
+    //     std::function<vector<int>(const vector<vector<int>>&, const vector<int>&,
+    //     int)>;
+    // const initializer_list<pair<_Func, const char*>> LS_TYPES{
+    //     {multiple_start_steepestLS, "multiplestart_steepest_LS"},
+    //     {iterative_steepest_LS, "iterative_steepest_LS"},
+    //     {large_scale_neighbourhood_LS, "largescale_steepest_LS"},
+    //     {large_scale_neighbourhood_LS2, "largescale2_steepest_LS"},
+    // };
+    Stopwatch timer;
+    Stopwatch timer_all;
+    latextables.clear();
+
+    string_view out_fname = "data/results-evol/summary.json";
+    ofstream out = openOutFile(out_fname, "", std::ios_base::app | std::ios_base::binary);
+    // out << "[\n";
+    ResultsWriter wr;
+    wr.instance = input_file_name;
+    if (input_file_name.ends_with(".csv")) {
+        wr.instance.remove_suffix(4);
+    }
+
+    // for (auto [localsearchfunc, funcname] : LS_TYPES) {
+    SolutionStats stats;
+
+    wr.local_search_type = "HEA";
+
+    for (int seed = 0; seed < 20; seed++) {
+        timer.reset();
+        auto solution = evolutionarySolver(inst.distances, inst.costs, 42 * (seed + 1));
+
+        auto t = timer.count_nanos() / 1000.0;
+        auto value = inst.evaluateSolution(solution);
+        stats.track(solution, value);
+        stats.add_time(t);
+    }
+
+    cout << std::format("{{\\\\ {}, }}  & {} & \n", "HEA",
+                        stats.format_latex_one_field());
+    cout << std::format(
+        "Took {:.3f} s\n",
+        // sum
+        std::accumulate(stats.timings.begin(), stats.timings.end(), 0LL) / 1e6);
+    // cout << "Timing summary (\u03BCs):\n";
+    cout << "Timing summary in us:\n";
+    print_summary(describe_vec(stats.timings));
+
+    // save to different folder
+    printResults(stats.best_sol, true,
+                 std::format("{}_{}_best.txt", input_file_name, "HEA"), "data/results-evol");
+
+    wr.scores_summary = describe_vec(stats.scores);
+    wr.timing_summary = describe_vec(stats.timings);
+    wr.print_json_to(out);
+    out << "\n";
+}
+
 }  // namespace run
 
 int main(int argc, char* argv[])
@@ -330,10 +390,20 @@ int main(int argc, char* argv[])
         // run::main_local_search(inst, input_file_name);
         // run::main_local_search_variants(inst, input_file_name);
 
-        vector<int> best_sol = iterative_steepest_LS(inst.distances,inst.costs,42);
-        cout<<"BEST SCORE "<<inst.evaluateSolution(best_sol)<<endl;
-        task8(inst.distances, inst.costs, best_sol, input_file_name);
-        cout << "\n\n";
+        // vector<int> best_sol = iterative_steepest_LS(inst.distances,inst.costs,42);
+        // cout<<"BEST SCORE "<<inst.evaluateSolution(best_sol)<<endl;
+        // task8(inst.distances, inst.costs, best_sol, input_file_name);
+        // cout << "\n\n";
+        // run::main_assignment_2(inst, input_file_name);
+        run::task9(inst, input_file_name);
+        // for (int i = 0; i < 20; i++) {
+        //     vector<int> result = evolutionarySolver(inst.distances, inst.costs, 42);
+        //     cout << inst.evaluateSolution(result) << endl;
+        // }
+        // for (auto i : result) {
+        //     cout << i << '\t';
+        // }
+        // cout << endl;
     }
     return 0;
 }
