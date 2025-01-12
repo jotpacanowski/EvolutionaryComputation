@@ -58,7 +58,8 @@ for each in ["TSPA", "TSPB"]:
 # %%
 # results = list(Path("data/results/").rglob("*.txt"))
 # results = list(Path("data/results-LS/").rglob("*.txt"))
-results = list(Path("data/results-6/").rglob("*.txt"))
+# results = list(Path("data/results-6/").rglob("*.txt"))
+results = list(Path("data/results-evol/").rglob("*.txt"))
 # print(*[p.as_posix() for p in results], sep='\n')
 # print(*[p.stem.split("_") for p in results], sep="\n")
 
@@ -66,14 +67,13 @@ results = list(Path("data/results-6/").rglob("*.txt"))
 # %%
 
 # PLOTOUT = Path("data/plots/")
-PLOTOUT = Path("data/plots-ls-variations/")
+PLOTOUT = Path("data/plots-evol/")
 PLOTOUT.mkdir(exist_ok=True)
 
 DISPLAY_TITLE = {
-    "iterative_LS": "Iterative Local Search",
-    "multiplestart_LS": "Multiple Start Local Search",
-    "largescale": "Large Neighbourhood Local Search",
-    "largescale2": "Large Neighbourhood Search (no LS)",
+    "HEA_LS": "Hybrid Evolutionary Algorithm, Local Search",
+    "HEA_NOLS": "Hybrid Evolutionary Algorithm, No Local Search"
+    
 }
 
 # %%
@@ -159,15 +159,13 @@ def main():
         print(each_file.stem)
         try:
             # inst, method, baw = each_file.stem.split("_")
-            inst, steepest, initial, nodesedges, baw = each_file.stem.split("_")
-            if steepest == "iterative":
-                steepest = "Iterative Local Search"
-            if steepest == "multiplestart":
-                steepest = "Multiple Start Local Search"
-            if steepest == "largescale":
-                steepest = "Large Neighbourhood Local Search"
-            if steepest == "largescale2":
-                steepest = "Large Neighbourhood Search (no LS)"
+            inst, steepest, _, ls, baw = each_file.stem.split("_")
+            if steepest == "Hybrid Evolutionary Algorithm":
+                steepest = "HEA"
+            if ls =="LS":
+                ls = "Local Search"
+            if ls =="NOLS":
+                ls = "No Local Search"
         except ValueError:
             print(f"\n\n  bad name: {each_file.stem.split('_')}\n\n")
             # break
@@ -193,7 +191,7 @@ def main():
             df,
             sol,
             # title=f"{em} - {baw} {inst} solution\nscore {zd+zc}",
-            title=f"{steepest}\nBest solution",
+            title=f"{steepest} {ls}\nBest solution",
             show=False,
         )
         # plt.savefig(PLOTOUT / f"{inst}_{baw}_{method}.png", dpi=DPI)
@@ -209,7 +207,7 @@ def main():
 """
         # % \caption{Instance ``A''}
         # % \label{fig:instanceA}
-        s = s.replace("res/plot", f"plots-ls-variations/{fname.stem}")
+        s = s.replace("res/plot", f"plots-evol/{fname.stem}")
         print(s.strip())
 
         print("[", end="")
@@ -219,3 +217,5 @@ def main():
 
 if __name__ == "__main__":
     main()
+
+# %%

@@ -331,37 +331,45 @@ void task9(const TSPInstance& inst, string_view input_file_name)
 
     // for (auto [localsearchfunc, funcname] : LS_TYPES) {
     SolutionStats stats;
+    const char* types[2] = {
+        "NOLS",
+        "LS"
+    };
+    
+    for (int i = 0; i < 2; i++) {
+        wr.local_search_type = "HEA";
 
-    wr.local_search_type = "HEA";
+        for (int seed = 0; seed < 20; seed++) {
+            timer.reset();
+            auto solution =
+                evolutionarySolver(inst.distances, inst.costs, 42 * (seed + 1), i);
 
-    for (int seed = 0; seed < 20; seed++) {
-        timer.reset();
-        auto solution = evolutionarySolver(inst.distances, inst.costs, 42 * (seed + 1));
+            auto t = timer.count_nanos() / 1000.0;
+            auto value = inst.evaluateSolution(solution);
+            stats.track(solution, value);
+            stats.add_time(t);
+        }
 
-        auto t = timer.count_nanos() / 1000.0;
-        auto value = inst.evaluateSolution(solution);
-        stats.track(solution, value);
-        stats.add_time(t);
+        cout << std::format("{{\\\\ {} {}, }}  & {} & \n", "HEA",types[i],
+                            stats.format_latex_one_field());
+        cout << std::format(
+            "Took {:.3f} s\n",
+            // sum
+            std::accumulate(stats.timings.begin(), stats.timings.end(), 0LL) / 1e6);
+        // cout << "Timing summary (\u03BCs):\n";
+        cout << "Timing summary in us:\n";
+        print_summary(describe_vec(stats.timings));
+
+        // save to different folder
+        printResults(stats.best_sol, true,
+                     std::format("{}_{}__{}_best.txt", input_file_name, "HEA", types[i]),
+                     "data/results-evol");
+
+        wr.scores_summary = describe_vec(stats.scores);
+        wr.timing_summary = describe_vec(stats.timings);
+        wr.print_json_to(out);
+        out << "\n";
     }
-
-    cout << std::format("{{\\\\ {}, }}  & {} & \n", "HEA",
-                        stats.format_latex_one_field());
-    cout << std::format(
-        "Took {:.3f} s\n",
-        // sum
-        std::accumulate(stats.timings.begin(), stats.timings.end(), 0LL) / 1e6);
-    // cout << "Timing summary (\u03BCs):\n";
-    cout << "Timing summary in us:\n";
-    print_summary(describe_vec(stats.timings));
-
-    // save to different folder
-    printResults(stats.best_sol, true,
-                 std::format("{}_{}_best.txt", input_file_name, "HEA"), "data/results-evol");
-
-    wr.scores_summary = describe_vec(stats.scores);
-    wr.timing_summary = describe_vec(stats.timings);
-    wr.print_json_to(out);
-    out << "\n";
 }
 
 }  // namespace run

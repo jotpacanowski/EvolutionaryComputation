@@ -190,12 +190,6 @@ vector<int> recombination1(const vector<int>& parent1, const vector<int>& parent
     vector<vector<int>> common_subseq =
         getCommonSubsequences(parent1, parent2, common_nodes);
 
-    // cout << "COMMON SUBSEQ: " << common_subseq.size() << endl;
-    // for (auto i : common_subseq) {
-    //     cout << i.size() << '\t';
-    // }
-    // cout << endl;
-
     vector<int> offspring;
     for (const auto& vec : common_subseq) {
         // Concatenate by inserting each vector's elements into the result
@@ -263,14 +257,6 @@ vector<int> recombination3(const vector<vector<int>>& distanceMatrix,
             }
         }
     }
-    // for (int i = 0; i < parent1.size(); i++) {
-    //     for (int j : parent2) {
-    //         if (parent1[i] == j) {
-    //             offspring[i] = parent1[i];
-    //         }
-    //     }
-    // }
-    // cout << "eh: " << eh << endl;
     set<int> in_offspring(offspring.begin(), offspring.end());
     in_offspring.erase(-1);
 
@@ -331,22 +317,33 @@ vector<int> recombination4(const vector<vector<int>>& distanceMatrix,
 }
 
 vector<int> evolutionarySolver(const vector<vector<int>>& distanceMatrix,
-                               const vector<int>& costs, int seed)
+                               const vector<int>& costs, int seed,
+                               bool localSearch = false)
 {
     // 1. Generate initial population
     vector<vector<int>> population;
-    const int POPULATION_SIZE = 50;
-    for (int i = 0; i < POPULATION_SIZE; i++) {
-        vector<int> p1 = randomTSP(distanceMatrix, costs, (seed + (3 * (i + 3))));
-        p1 = greedyLocalSearch(p1, distanceMatrix, costs, true);
-        population.push_back(p1);
-    }
-
+    const int POPULATION_SIZE = 100;
     vector<int> population_scores;
-    population_scores.reserve(population.size());
-
-    for (const auto& pop : population) {
-        population_scores.push_back(_evaluate_solution(pop, distanceMatrix, costs));
+    population_scores.reserve(POPULATION_SIZE);
+    int val = 0;
+    for (int i = 0; i < POPULATION_SIZE; i++) {
+        vector<int> p1;
+        p1.reserve(100);
+        int p1_score = 1000000;
+        do {
+            p1 = randomTSP(distanceMatrix, costs, (seed + (3 * (i + 3+val))));
+            p1 = steepestLocalSearch(p1, distanceMatrix, costs, true);
+            p1_score = _evaluate_solution(p1, distanceMatrix, costs);
+            if (std::find(population_scores.begin(), population_scores.end(), p1_score)
+                != population_scores.end()) {
+                cout << "Repeat in population" << endl;
+                val++;
+                continue;
+            }
+            break;
+        } while (true);
+        population_scores.push_back(p1_score);
+        population.push_back(p1);
     }
 
     int worst_idx = std::distance(
@@ -382,9 +379,24 @@ vector<int> evolutionarySolver(const vector<vector<int>>& distanceMatrix,
 
         // 3. Construct child
         // vector<int> child = recombination1(parent1, parent2);
-        vector<int> child = recombination4(distanceMatrix, costs, parent1, parent2);
+        vector<int> child;
+        child.reserve(parent1.size());
+        if (rand() % 2 == 0) {
+            // cout<<"v1"<<endl;
+            child = recombination4(distanceMatrix, costs, parent1, parent2);
+        }
+        else {
+            // cout<<"v2"<<endl;
+            // child = recombination1(parent1, parent2);
+            child = recombination3(distanceMatrix, costs, parent1, parent2);
+        }
+        if (localSearch) {
+            if (rand() % 2 == 0) {
+                child = greedyLocalSearch(child, distanceMatrix, costs, true);
+            }
+        }
+
         // vector<int> child2 = recombination4(distanceMatrix, costs, parent1, parent2);
-        child = greedyLocalSearch(child, distanceMatrix, costs, true);
         // child2 = steepestLocalSearch(child2, distanceMatrix, costs, true);
         // cout << "parent1: " << _evaluate_solution(parent1, distanceMatrix, costs) <<
         // endl;
@@ -451,10 +463,10 @@ vector<int> evolutionarySolver(const vector<vector<int>>& distanceMatrix,
                 std::max_element(population_scores.begin(), population_scores.end()));
         }
         patience++;
-        if (patience > 1000) {
-            cout << "Run out of patience, loop: " << i << endl;
-            break;
-        }
+        // if (patience > 1000) {
+        //     cout << "Run out of patience, loop: " << i << endl;
+        //     break;
+        // }
     }
     cout << "Iterations: " << i << "\tGood children: " << a << "\tRepeats: " << repeats
          << endl;
