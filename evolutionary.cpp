@@ -316,13 +316,26 @@ vector<int> recombination4(const vector<vector<int>>& distanceMatrix,
     return offspring;
 }
 
+std::random_device random_dev;
+
 vector<int> evolutionarySolver(const vector<vector<int>>& distanceMatrix,
                                const vector<int>& costs, int seed,
                                bool localSearch = false)
 {
+    // std::mt19937_64 rng(seed);
+    std::mt19937_64 rng(random_dev());
+
     // 1. Generate initial population
-    vector<vector<int>> population;
     const int POPULATION_SIZE = 100;
+    static_assert(POPULATION_SIZE > 5, "minimal POPULATION_SIZE");
+
+    vector<vector<int>> population;
+    for (int i = 0; i < POPULATION_SIZE; i++) {
+        vector<int> p1 = randomTSP(distanceMatrix, costs, (rng() + seed + (9 * (i + 3))));
+        p1 = greedyLocalSearch(p1, distanceMatrix, costs, true);
+        population.push_back(p1);
+    }
+
     vector<int> population_scores;
     population_scores.reserve(POPULATION_SIZE);
     int val = 0;
@@ -350,10 +363,8 @@ vector<int> evolutionarySolver(const vector<vector<int>>& distanceMatrix,
         population_scores.begin(),
         std::max_element(population_scores.begin(), population_scores.end()));
 
-    std::uniform_int_distribution<std::mt19937::result_type> dist100(0,
-                                                                     POPULATION_SIZE - 1);
-    std::random_device dev;
-    std::mt19937 rng(seed);
+    std::uniform_int_distribution<> dist100(0, POPULATION_SIZE - 1);
+    std::uniform_int_distribution<> dist99(0, POPULATION_SIZE - 2);
 
     int patience = 0;
     int a = 0;
@@ -364,16 +375,14 @@ vector<int> evolutionarySolver(const vector<vector<int>>& distanceMatrix,
     auto start = now();
     int i = 0;
     int repeats = 0;
-    // int stupid = 0;
     while ((now() - start) < work_duration) {
         i++;
 
         // 2. Select Parents
-        int p1 = dist100(dev);
-        int p2;
-        do {
-            p2 = dist100(dev);
-        } while (p1 == p2);
+        // int p1 = dist100(random_dev);
+        int p1 = dist100(rng);
+        int p2 = dist99(rng);
+        if(p2 >= p1) p2 = p2 + 1;
         vector<int> parent1 = population[p1];
         vector<int> parent2 = population[p2];
 
