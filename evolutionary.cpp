@@ -322,6 +322,9 @@ vector<int> evolutionarySolver(const vector<vector<int>>& distanceMatrix,
                                const vector<int>& costs, int seed,
                                bool localSearch = false)
 {
+    using namespace std::chrono;
+    using namespace std::chrono_literals;
+
     // std::mt19937_64 rng(seed);
     std::mt19937_64 rng(random_dev());
 
@@ -368,14 +371,13 @@ vector<int> evolutionarySolver(const vector<vector<int>>& distanceMatrix,
 
     int patience = 0;
     int a = 0;
-    auto now = std::chrono::steady_clock::now;
-    using namespace std::chrono_literals;
-    auto work_duration = 1336688.95us;
-    // work_duration = 5s;
+    auto now = chrono::steady_clock::now;
+    // auto work_duration = 1'350ms;
+    auto work_duration_ms = 1'350;
     auto start = now();
     int i = 0;
     int repeats = 0;
-    while ((now() - start) < work_duration) {
+    while ( chrono::duration_cast<chrono::milliseconds>(now() - start).count() < work_duration_ms) {
         i++;
 
         // 2. Select Parents
