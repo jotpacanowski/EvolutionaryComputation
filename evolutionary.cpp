@@ -333,12 +333,7 @@ vector<int> evolutionarySolver(const vector<vector<int>>& distanceMatrix,
     static_assert(POPULATION_SIZE > 5, "minimal POPULATION_SIZE");
 
     vector<vector<int>> population;
-    for (int i = 0; i < POPULATION_SIZE; i++) {
-        vector<int> p1 = randomTSP(distanceMatrix, costs, (rng() + seed + (9 * (i + 3))));
-        p1 = greedyLocalSearch(p1, distanceMatrix, costs, true);
-        population.push_back(p1);
-    }
-
+    population.reserve(POPULATION_SIZE);
     vector<int> population_scores;
     population_scores.reserve(POPULATION_SIZE);
     int val = 0;
