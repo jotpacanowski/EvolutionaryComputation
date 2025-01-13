@@ -213,6 +213,9 @@ vector<int> steepestLocalSearch(vector<int> solution,
     return solution;
 }
 
+// TODO: add mutex here if code is multi-threaded
+std::random_device greedy_ls_rd;
+
 vector<int> greedyLocalSearch(vector<int> solution,
                               const vector<vector<int>> &distanceMatrix,
                               const vector<int> &costs, bool edges, int *iterations)
@@ -236,8 +239,8 @@ vector<int> greedyLocalSearch(vector<int> solution,
         }
     }
     int patience = 10;
-    std::random_device rd;
-    std::mt19937 g(rd());
+    // std::mt19937 g(greedy_ls_rd());
+    std::mt19937_64 g(greedy_ls_rd());
 
     std::shuffle(not_in_sol.begin(), not_in_sol.end(), g);
     std::shuffle(in_sol.begin(), in_sol.end(), g);
