@@ -330,7 +330,9 @@ vector<int> evolutionarySolver(const vector<vector<int>>& distanceMatrix,
     std::mt19937_64 rng(random_dev());
 
     std::bernoulli_distribution recombination_coin_flip(0.5);  // true/false
-    std::bernoulli_distribution greedy_LS_coin_flip(0.75);
+    std::bernoulli_distribution greedy_LS_coin_flip(0.5);
+    std::bernoulli_distribution perturbation_coin_flip(1 / 8);
+    std::bernoulli_distribution destroy_repair_coin_flip(1.0);
 
     const int POPULATION_SIZE = 100;
     static_assert(POPULATION_SIZE > 5, "minimal POPULATION_SIZE");
@@ -346,8 +348,10 @@ vector<int> evolutionarySolver(const vector<vector<int>>& distanceMatrix,
         // p1.reserve(100);
         int p1_score = 1'000'000;
         do {
-            p1 = randomTSP(distanceMatrix, costs, (seed + (3 * (i + 3 + val))));
-            p1 = steepestLocalSearch(p1, distanceMatrix, costs, true);
+            // p1 = randomTSP(distanceMatrix, costs, (seed + (3 * (i + 3 + val))));
+            p1 = randomTSP(distanceMatrix, costs, (seed + rng() + (3 * (i + 3 + val))));
+            // p1 = steepestLocalSearch(p1, distanceMatrix, costs, true);
+            p1 = greedyLocalSearch(p1, distanceMatrix, costs, true);
             p1_score = _evaluate_solution(p1, distanceMatrix, costs);
             if (std::find(population_scores.begin(), population_scores.end(), p1_score)
                 != population_scores.end()) {
@@ -398,8 +402,19 @@ vector<int> evolutionarySolver(const vector<vector<int>>& distanceMatrix,
         else {
             child = recombination3(distanceMatrix, costs, parent1, parent2);
         }
+
+        if (destroy_repair_coin_flip(rng)) {
+            child = destroy_repair_non_deterministic_multiple_chains(distanceMatrix,
+                                                                     costs, child, rng());
+        }
+
+        // if(perturbation_coin_flip(rng)){
+        //     child = perturb(distanceMatrix, costs, child, rng());
+        // }
+
         if (localSearch) {
-            if (greedy_LS_coin_flip(rng)) {
+            // if (greedy_LS_coin_flip(rng)) {
+            {
                 child = greedyLocalSearch(child, distanceMatrix, costs, true);
             }
         }
