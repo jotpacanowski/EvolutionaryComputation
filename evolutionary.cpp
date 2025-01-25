@@ -342,7 +342,7 @@ vector<int> evolutionarySolver(const vector<vector<int>>& distanceMatrix,
         p1.reserve(100);
         int p1_score = 1000000;
         do {
-            p1 = randomTSP(distanceMatrix, costs, (seed + (3 * (i + 3+val))));
+            p1 = randomTSP(distanceMatrix, costs, (seed + (3 * (i + 3 + val))));
             p1 = steepestLocalSearch(p1, distanceMatrix, costs, true);
             p1_score = _evaluate_solution(p1, distanceMatrix, costs);
             if (std::find(population_scores.begin(), population_scores.end(), p1_score)
@@ -372,14 +372,15 @@ vector<int> evolutionarySolver(const vector<vector<int>>& distanceMatrix,
     auto start = now();
     int i = 0;
     int repeats = 0;
-    while ( chrono::duration_cast<chrono::milliseconds>(now() - start).count() < work_duration_ms) {
+    while (chrono::duration_cast<chrono::milliseconds>(now() - start).count()
+           < work_duration_ms) {
         i++;
 
         // 2. Select Parents
         // int p1 = dist100(random_dev);
         int p1 = dist100(rng);
         int p2 = dist99(rng);
-        if(p2 >= p1) p2 = p2 + 1;
+        if (p2 >= p1) p2 = p2 + 1;
         vector<int> parent1 = population[p1];
         vector<int> parent2 = population[p2];
 

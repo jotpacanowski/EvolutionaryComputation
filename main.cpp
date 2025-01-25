@@ -307,15 +307,6 @@ void main_local_search_variants(const TSPInstance& inst, string_view input_file_
 
 void task9(const TSPInstance& inst, string_view input_file_name)
 {
-    // using _Func =
-    //     std::function<vector<int>(const vector<vector<int>>&, const vector<int>&,
-    //     int)>;
-    // const initializer_list<pair<_Func, const char*>> LS_TYPES{
-    //     {multiple_start_steepestLS, "multiplestart_steepest_LS"},
-    //     {iterative_steepest_LS, "iterative_steepest_LS"},
-    //     {large_scale_neighbourhood_LS, "largescale_steepest_LS"},
-    //     {large_scale_neighbourhood_LS2, "largescale2_steepest_LS"},
-    // };
     Stopwatch timer;
     Stopwatch timer_all;
     latextables.clear();
@@ -331,11 +322,8 @@ void task9(const TSPInstance& inst, string_view input_file_name)
 
     // for (auto [localsearchfunc, funcname] : LS_TYPES) {
     SolutionStats stats;
-    const char* types[2] = {
-        "NOLS",
-        "LS"
-    };
-    
+    const char* types[2] = {"NOLS", "LS"};
+
     for (int i = 0; i < 2; i++) {
         wr.local_search_type = "HEA";
 
@@ -350,7 +338,7 @@ void task9(const TSPInstance& inst, string_view input_file_name)
             stats.add_time(t);
         }
 
-        cout << std::format("{{\\\\ {} {}, }}  & {} & \n", "HEA",types[i],
+        cout << std::format("{{\\\\ {} {}, }}  & {} & \n", "HEA", types[i],
                             stats.format_latex_one_field());
         cout << std::format(
             "Took {:.3f} s\n",
@@ -402,8 +390,9 @@ int main(int argc, char* argv[])
         // cout<<"BEST SCORE "<<inst.evaluateSolution(best_sol)<<endl;
         // task8(inst.distances, inst.costs, best_sol, input_file_name);
         // cout << "\n\n";
-        // run::main_assignment_2(inst, input_file_name);
+
         run::task9(inst, input_file_name);
+
         // for (int i = 0; i < 20; i++) {
         //     vector<int> result = evolutionarySolver(inst.distances, inst.costs, 42);
         //     cout << inst.evaluateSolution(result) << endl;
