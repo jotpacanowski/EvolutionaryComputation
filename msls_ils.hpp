@@ -19,3 +19,12 @@ vector<int> large_scale_neighbourhood_LS(const vector<vector<int>>& distanceMatr
 
 vector<int> large_scale_neighbourhood_LS2(const vector<vector<int>>& distanceMatrix,
                                           const vector<int>& costs, int seed);
+
+// ILS perturbation
+vector<int> perturb(const vector<vector<int>>& distanceMatrix, const vector<int>& costs,
+                    vector<int>& solution, int seed);
+
+// LNS perturbation
+vector<int> destroy_repair_non_deterministic_multiple_chains(
+    const vector<vector<int>>& distanceMatrix, const vector<int>& costs,
+    vector<int>& solution, int seed);
