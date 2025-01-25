@@ -179,7 +179,7 @@ def main():
         df, (node_costs, xy_points, D) = instances[inst]
         print(len(sol), "nodes")
         zc, zd = objective(D, node_costs, sol)
-        print(f"score {zd+zc}  ({zc} + {zd})")
+        print(f"score {zd+zc}  ({zc} cost + {zd} distance)")
         assert len(sol) == (len(node_costs) + 1) // 2, "number of selected nodes"
         if sol[0] != sol[1]:
             assert len(set(sol)) == len(sol), "unique indices"
