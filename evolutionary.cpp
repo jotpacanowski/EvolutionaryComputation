@@ -3,6 +3,7 @@
 #include <cstdint>
 #include <cstdlib>
 #include <numeric>
+#include <random>
 #include <set>
 #include <type_traits>
 #include <unordered_set>
@@ -328,10 +329,13 @@ vector<int> evolutionarySolver(const vector<vector<int>>& distanceMatrix,
     // std::mt19937_64 rng(seed);
     std::mt19937_64 rng(random_dev());
 
-    // 1. Generate initial population
+    std::bernoulli_distribution recombination_coin_flip(0.5);  // true/false
+    std::bernoulli_distribution greedy_LS_coin_flip(0.75);
+
     const int POPULATION_SIZE = 100;
     static_assert(POPULATION_SIZE > 5, "minimal POPULATION_SIZE");
 
+    // 1. Generate initial population
     vector<vector<int>> population;
     population.reserve(POPULATION_SIZE);
     vector<int> population_scores;
@@ -339,15 +343,15 @@ vector<int> evolutionarySolver(const vector<vector<int>>& distanceMatrix,
     int val = 0;
     for (int i = 0; i < POPULATION_SIZE; i++) {
         vector<int> p1;
-        p1.reserve(100);
-        int p1_score = 1000000;
+        // p1.reserve(100);
+        int p1_score = 1'000'000;
         do {
             p1 = randomTSP(distanceMatrix, costs, (seed + (3 * (i + 3 + val))));
             p1 = steepestLocalSearch(p1, distanceMatrix, costs, true);
             p1_score = _evaluate_solution(p1, distanceMatrix, costs);
             if (std::find(population_scores.begin(), population_scores.end(), p1_score)
                 != population_scores.end()) {
-                cout << "Repeat in population" << endl;
+                cout << "Repeat in new population\n";
                 val++;
                 continue;
             }
@@ -388,49 +392,17 @@ vector<int> evolutionarySolver(const vector<vector<int>>& distanceMatrix,
         // vector<int> child = recombination1(parent1, parent2);
         vector<int> child;
         child.reserve(parent1.size());
-        if (rand() % 2 == 0) {
-            // cout<<"v1"<<endl;
+        if (recombination_coin_flip(rng)) {
             child = recombination4(distanceMatrix, costs, parent1, parent2);
         }
         else {
-            // cout<<"v2"<<endl;
-            // child = recombination1(parent1, parent2);
             child = recombination3(distanceMatrix, costs, parent1, parent2);
         }
         if (localSearch) {
-            if (rand() % 2 == 0) {
+            if (greedy_LS_coin_flip(rng)) {
                 child = greedyLocalSearch(child, distanceMatrix, costs, true);
             }
         }
-
-        // vector<int> child2 = recombination4(distanceMatrix, costs, parent1, parent2);
-        // child2 = steepestLocalSearch(child2, distanceMatrix, costs, true);
-        // cout << "parent1: " << _evaluate_solution(parent1, distanceMatrix, costs) <<
-        // endl;
-
-        // for (auto t : parent1) {
-        //     cout << t << ',';
-        // }
-        // cout << endl;
-        // cout << "parent2: " << _evaluate_solution(parent2, distanceMatrix, costs) <<
-        // endl; for (auto t : parent2) {
-        //     cout << t << ',';
-        // }
-        // cout << endl;
-        // cout << "child1 (insertion random): "
-        //      << _evaluate_solution(child, distanceMatrix, costs) << endl;
-        // for (auto t : child) {
-        //     cout << t << ',';
-        // }
-        // cout << endl;
-        // cout << "child2 (repair): " << _evaluate_solution(child2, distanceMatrix,
-        // costs)
-        //      << endl;
-        // for (auto t : child2) {
-        //     cout << t << ',';
-        // }
-        // cout << endl;
-        // return child;
 
         int child_score = _evaluate_solution(child, distanceMatrix, costs);
         if (std::find(population_scores.begin(), population_scores.end(), child_score)
@@ -439,24 +411,6 @@ vector<int> evolutionarySolver(const vector<vector<int>>& distanceMatrix,
             patience++;
             continue;
         }
-        // if (i % 200 == 0) {
-        //     cout << "P1: " << p1 << " P2: " << p2 << endl;
-        // cout << "Parent 1: " << population_scores[p1] << endl;
-        //     // for (auto i : parent1) {
-        //     //     cout << i << '\t';
-        //     // }
-        //     // cout << endl;
-        // cout << "Parent 2: " << population_scores[p2] << endl;
-        //     // for (auto i : parent2) {
-        //     //     cout << i << '\t';
-        //     // }
-        //     // cout << endl;
-        // cout << "Child1: " << child_score << endl;
-        //     // for (auto i : child) {
-        //     //     cout << i << '\t';
-        //     // }
-        //     // cout << endl;
-        // }
 
         // 4. If child is better than worst element of population, add child to population
         if (child_score < population_scores[worst_idx]) {
